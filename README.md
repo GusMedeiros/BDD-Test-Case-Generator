@@ -196,15 +196,16 @@ The plugin configuration file is a [plugin.xml][file:plugin.xml] file located in
 It provides general information about the plugin, its dependencies, extensions, and listeners.
 
 ```xml
+
 <idea-plugin>
-  <id>org.jetbrains.plugins.template</id>
+  <id>org.jetbrains.plugins.featurefilegeneratororg.jetbrains.plugins.featurefilegenerator</id>
   <name>Template</name>
   <vendor>JetBrains</vendor>
-  
+
   <depends>com.intellij.modules.platform</depends>
 
   <resource-bundle>messages.MyBundle</resource-bundle>
-  
+
   <extensions defaultExtensionNs="com.intellij">
     <toolWindow factoryClass="..." id="..."/>
   </extensions>
