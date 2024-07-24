@@ -1,0 +1,74 @@
+Atue como um programador trabalhando com Behavior Driven Development (BDD). No BDD, você começa com a definição de 'Funcionalidade', que descreve o comportamento desejado do software; em seguida, você elabora o 'Cenário', detalhando um caso de uso específico dessa 'Funcionalidade'; e, por fim, são especificados os 'Exemplos', que são dados específicos utilizados para ilustrar um ‘Cenário’.
+
+No próximo prompt eu irei te enviar uma história de usuário como entrada e, com base nela, gerar como saída apenas um único arquivo .feature que contém um conjunto de 'Exemplos' logo abaixo de cada 'Cenário'.  Você deverá criar  'Exemplos ' com um conjunto de valores de forma a atender os critérios de 'Particionamento em Classes de Equivalência' e 'Análise do Valor Limite' .
+
+Crie a tabela de 'Exemplos' abaixo de cada 'Cenário' correspondente, onde cada título de coluna corresponde às variáveis definidas no 'Cenário'. Ou seja, se forem gerados 'n' cenários, então o arquivo .feature também deverá gerar 'n' tabelas de 'Exemplos' seguido de seu respectivo 'Cenário'. Certifique-se de que o arquivo .feature siga a sintaxe da linguagem Gherkin corretamente.
+
+Ao elaborar o arquivo, mantenha a resposta no mesmo idioma da entrada recebida, incluindo as palavras-chaves da sintaxe Gherkin. Certifique-se de respeitar todos os nomes de variáveis citados na história do usuário. Coloque as variáveis do 'Cenário' entre sinais de menor que (<) e maior que (>). Lembre-se também que as palabras seguidas de um '*' no final nas história de usuário, significa que são campos obrigatórios. Não converse com o usuário, não faça anotações ou observações, apenas retorne o arquivo pedido.
+
+Segue um exemplo para você entender a estrutura de como queremos que seja a saída.
+
+“””
+Cenário: Adicionar números
+     Dado o <num1>  inserido na calculadora
+     E  digitar <num2> na calculadora
+     Quando pressiono o botão Add
+     Então o resultado deve ser <resultado> na tela
+
+     Exemplos:
+       | num1 | num2 | resultado |
+       | 1 | 2 | 3 |
+       | 2 | 3 | 5 |
+       | -5 | -5 | -10 |
+       | -5 | 10 | 5 |
+       | 5 | -10 | -5 |
+       | 0.3 | 0.3 | 0.6 |
+       | 0 | 0 | 0 |
+       | -5 | 5 | 0 |
+
+Cenário: Adicionar números inválidos
+     Dado o <num1>  inserido na calculadora
+     E  digitar <num2> na calculadora
+     Quando pressiono o botão Add
+     Então o resultado deve ser <resultado> na tela
+
+     Exemplos:
+       | num1 | num2 | resultado |
+       | a | b | error |
+       | “ ” | b | error |
+       |a |  “ ” | error |
+ “””
+
+História de usuario:
+
+Eu, como administrador do sistema, desejo cadastrar um local.
+Títulos das telas: Dashboard, Lista de Locais, Cadastrar Local.
+O usuário navega na tela de Dashboard para o Menu lateral, pressiona o botão Locais, contendo uma lista de entradas correspondentes, cada um a um local, indicando:
+⦁ Descrição do local*
+⦁ Endereço do local*
+⦁ Data de criação do local*
+⦁ Data da última edição do local*
+⦁ Opções de ação*
+
+Na parte superior da lista, há um campo de busca e um botão Novo Local. Ao clicar em Novo Local, é exibida a página Cadastrar Local, onde é possível cadastrar um novo local com as seguintes informações:
+⦁ Descrição do local*
+⦁ CEP do local*
+⦁ Endereço do local*
+⦁ Número*
+⦁ Complemento
+⦁ Bairro*
+⦁ Município*
+⦁ Unidade Federativa*
+⦁ País*
+⦁ Latitude*
+⦁ Longitude*
+
+Ao preencher a informação CEP, as outras informações são preenchidas automaticamente, com exceção das informações não obrigatórias Complemento, Latitude e Longitude.
+
+Ao lado do campo de longitude, deve haver um botão “Buscar” que deve permitir ao usuário realizar uma busca de geolocalização do endereço fornecido para recuperar as coordenadas a partir de um algoritmo de geocoding.
+
+Abaixo do formulário, deve ser exibido um mapa com um marcador da geolocalização das coordenadas preenchidas.
+
+Regras de Negócio:
+RN01: A informação CEP deve ser um valor numérico válido de 8 dígitos.
+RN02: O mapa só deve ser exibido caso haja alguma coordenada preenchida.

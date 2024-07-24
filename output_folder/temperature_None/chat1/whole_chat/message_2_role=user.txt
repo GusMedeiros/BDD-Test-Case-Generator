@@ -1,0 +1,19 @@
+História de usuário:
+
+Descrição:
+
+Eu, como usuário administrador ou BackOffice, desejo selecionar as tags em uma tarefa já existente.
+
+Título da tela: Detalhes da Tarefa / Tags
+
+A tela Tags pode ser acessada pelo botão TAGS, na tela de Detalhes da Tarefa, ao editar uma tarefa existente.
+
+Deve conter uma tabela paginada com as tags disponíveis no sistema, cadastrados a partir da funcionalidade Criar Tags, e um campo de busca para procurar tags pelo seu nome.
+
+As entradas da tabela devem conter uma checkbox, e as tags já selecionadas anteriormente devem ser inicializadas já marcadas.
+
+Ao marcar uma checkbox, deve ser exibida uma mensagem de sucesso: “Tag vinculada com sucesso!”, enquanto ao desmarcar uma checkbox, deve ser exibida uma mensagem de sucesso: “Tag desvinculada com sucesso!”.
+
+Critérios de Aceitação:
+
+As tags só devem poder ser vinculadas durante a edição de uma tarefa existente.
