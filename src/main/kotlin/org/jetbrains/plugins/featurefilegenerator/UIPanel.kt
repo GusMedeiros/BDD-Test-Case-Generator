@@ -8,6 +8,7 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.nio.file.Files
+import java.util.*
 import javax.swing.*
 import kotlin.math.absoluteValue
 import kotlin.random.Random
@@ -132,8 +133,9 @@ class UIPanel(private val project: com.intellij.openapi.project.Project) : Dialo
                     reader.copyTo(writer)
                 }
             }
-
-            val processBuilder = ProcessBuilder("python", tempScriptFile.toString())
+            val os = System.getProperty("os.name").lowercase(Locale.getDefault())
+            val pythonCommand = if (os.contains("win")) "python" else "python3"
+            val processBuilder = ProcessBuilder(pythonCommand, tempScriptFile.toString())
             processBuilder.environment()["OPENAI_API_KEY"] = apiKey
             val process = processBuilder.start()
 

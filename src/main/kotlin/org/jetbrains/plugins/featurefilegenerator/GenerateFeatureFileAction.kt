@@ -8,8 +8,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import java.util.*
 
 class GenerateFeatureFileAction : AnAction() {
     override fun actionPerformed(event: AnActionEvent) {
@@ -36,6 +38,7 @@ class GenerateFeatureFileAction : AnAction() {
             }
 
             CoroutineScope(Dispatchers.Main).launch {
+                installRequirements()
                 val (success, featureOutput) = withContext(Dispatchers.IO) {
                     runPythonScript(userStoryPath, apiKey, outputDirPath, temperature, seed, debug, gptModel)
                 }
@@ -71,8 +74,11 @@ class GenerateFeatureFileAction : AnAction() {
             val tempPrompt = File.createTempFile("prompt", ".txt").apply { deleteOnExit() }
             Files.copy(resourceStream2, tempPrompt.toPath(), StandardCopyOption.REPLACE_EXISTING)
 
+            val os = System.getProperty("os.name").lowercase(Locale.getDefault())
+            val pythonCommand = if (os.contains("win")) "python" else "python3"
+
             val processBuilder = ProcessBuilder(
-                "python",
+                pythonCommand,
                 tempScript.absolutePath,
                 tempPrompt.absolutePath,
                 userStoryFilepath,
@@ -95,6 +101,40 @@ class GenerateFeatureFileAction : AnAction() {
         } catch (e: Exception) {
             e.printStackTrace()
             Pair(false, "Exceção ao executar o script Python: ${e.message}")
+        }
+    }
+
+    fun installRequirements() {
+        // Carregar o arquivo requirements.txt do resources
+        val resourcePath = "resources/python/requirements.txt"
+        val inputStream: InputStream = this::class.java.classLoader.getResourceAsStream(resourcePath)
+            ?: throw IllegalArgumentException("Arquivo $resourcePath não encontrado.")
+
+        // Criar um arquivo temporário para escrever o conteúdo de requirements.txt
+        val tempFile = Files.createTempFile(null, ".txt").toFile()
+        tempFile.deleteOnExit() // Garantir que o arquivo temporário será deletado após o uso
+
+        // Escrever o conteúdo do InputStream no arquivo temporário
+        inputStream.use { input ->
+            tempFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+
+        // Construir o comando pip install
+        val command = "pip install -r ${tempFile.absolutePath}"
+
+        // Executar o comando
+        val process = ProcessBuilder(command.split(" "))
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start()
+
+        val exitCode = process.waitFor()
+        if (exitCode == 0) {
+            println("Pacotes instalados com sucesso.")
+        } else {
+            println("Erro ao instalar os pacotes. Código de saída: $exitCode")
         }
     }
 }
