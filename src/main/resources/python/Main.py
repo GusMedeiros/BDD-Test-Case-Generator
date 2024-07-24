@@ -1,12 +1,11 @@
 import os
 import time
+import argparse
+import sys
 
 from openai import OpenAI
 
-
-
 class BddAgent:
-
     def __init__(self, key):
         os.environ["OPENAI_API_KEY"] = key
         self.client = OpenAI()
@@ -35,6 +34,7 @@ class BddAgent:
                     self.last_run = self.client.chat.completions.create(
                         model=model,
                         messages=self.messages,
+                        temperature=temperature
                     )
                 else:
                     self.last_run = self.client.chat.completions.create(
@@ -70,9 +70,6 @@ class Utils:
             return string.lstrip(left_strip).rstrip(right_strip)
         return string
 
-
-import argparse
-import sys
 
 prompt = """
 Atue como um programador trabalhando com Behavior Driven Development (BDD). No BDD, você começa com a definição de 'Funcionalidade', que descreve o comportamento desejado do software; em seguida, você elabora o 'Cenário', detalhando um caso de uso específico dessa 'Funcionalidade'; e, por fim, são especificados os 'Exemplos', que são dados específicos utilizados para ilustrar um ‘Cenário’.
@@ -152,18 +149,17 @@ RN02: O mapa só deve ser exibido caso haja alguma coordenada preenchida.
 """
 
 class Main:
-
     @staticmethod
     def add_initial_messages(agent: BddAgent, instruction_prompt_path: str, user_story_path: str):
         agent.add_message(role="user", content= prompt)
         agent.add_message_from_file(role="user", file_path=user_story_path)
 
     @staticmethod
-    def run_like_chat(agent: BddAgent, model: str, prompt_instruction_path: str, user_story_path: str):
+    def run_like_chat(agent: BddAgent, model: str, prompt_instruction_path: str, user_story_path: str, temperature=None, seed=None):
         Main.add_initial_messages(agent, prompt_instruction_path, user_story_path)
         while True:
             try:
-                agent.run(model)
+                agent.run(model, temperature=temperature, seed=seed)
                 response_content = agent.last_response.content
                 response_content = Utils.strip_gherkin_formatting(response_content)
                 return response_content
@@ -171,22 +167,21 @@ class Main:
                 continue
 
     @staticmethod
-    def run(prompt_instruction_path, user_story_path, key_string, times_to_run):
+    def run(prompt_instruction_path, user_story_path, key_string, output_dir_path, times_to_run, temperature, seed, debug=False):
         if times_to_run == 0:
             raise Exception("Error: trying to run 0 times")
         starting_run = 1
         final_run = times_to_run + 1
         for i in range(starting_run, final_run + 1):
             agent = BddAgent(key_string)
-            result = Main.run_like_chat(agent=agent, model="gpt-4o", prompt_instruction_path=prompt_instruction_path,
-                                      user_story_path=user_story_path)
-
-            for c, message in enumerate(agent.messages):
-                content = message["content"]
-                user_story_dir = os.path.dirname(args.user_story_path)
-                caminho_output = os.path.join(user_story_dir, f'msg{c}.txt')
-                with open(caminho_output, 'w', encoding="utf-8") as arquivo:
-                    arquivo.write(content)
+            result = Main.run_like_chat(agent=agent, model="gpt-4o-mini", prompt_instruction_path=prompt_instruction_path,
+                                        user_story_path=user_story_path, temperature=temperature, seed=seed)
+            if debug:
+                for c, message in enumerate(agent.messages):
+                    content = message["content"]
+                    caminho_output = os.path.join(output_dir_path, f'msg{c}.txt')
+                    with open(caminho_output, 'w', encoding="utf-8") as arquivo:
+                        arquivo.write(content)
             return result
 
 
@@ -196,15 +191,22 @@ if __name__ == "__main__":
                         help='Path to the predefined instruction to be applied to the user story')
     parser.add_argument('user_story_path', type=str, help='Path to the user story')
     parser.add_argument('api_key', type=str, help='Openai api key')
+    parser.add_argument('output_dir_path', type=str, help='Path to the output directory')
+    parser.add_argument('temperature', type=float, help='Temperature for the model')
+    parser.add_argument('seed', type=int, nargs='?', default='', help='Seed for reproducibility')
+    parser.add_argument('debug', type=str, help='Whether to run the script in debug mode', default='False')
+
     args = parser.parse_args()
+
+    # Convert debug argument to boolean using ternary operator
+    args.debug = True if args.debug.lower() in ('true', '1', 'yes') else False
 
     print(f"prompt path: {args.prompt_instruction_path}\n")
 
     try:
-        result = Main.run(args.prompt_instruction_path, args.user_story_path, args.api_key, 1)
+        result = Main.run(args.prompt_instruction_path, args.user_story_path, args.api_key, args.output_dir_path, 1, args.temperature, args.seed, args.debug)
         print(result)  # Print the result to stdout
-        user_story_dir = os.path.dirname(args.user_story_path)
-        caminho_output = os.path.join(user_story_dir, 'BDD_output.feature')
+        caminho_output = os.path.join(args.output_dir_path, 'BDD_output.feature')
         with open(caminho_output, 'w', encoding="utf-8") as arquivo:
             arquivo.write(result)
         sys.exit(0)  # Success
