@@ -167,14 +167,14 @@ class Main:
                 continue
 
     @staticmethod
-    def run(prompt_instruction_path, user_story_path, key_string, output_dir_path, times_to_run, temperature, seed, debug=False):
+    def run(prompt_instruction_path, user_story_path, key_string, output_dir_path, times_to_run, temperature, seed, model, debug=False):
         if times_to_run == 0:
             raise Exception("Error: trying to run 0 times")
         starting_run = 1
         final_run = times_to_run + 1
         for i in range(starting_run, final_run + 1):
             agent = BddAgent(key_string)
-            result = Main.run_like_chat(agent=agent, model="gpt-4o-mini", prompt_instruction_path=prompt_instruction_path,
+            result = Main.run_like_chat(agent=agent, model=model, prompt_instruction_path=prompt_instruction_path,
                                         user_story_path=user_story_path, temperature=temperature, seed=seed)
             if debug:
                 for c, message in enumerate(agent.messages):
@@ -195,6 +195,7 @@ if __name__ == "__main__":
     parser.add_argument('temperature', type=float, help='Temperature for the model')
     parser.add_argument('seed', type=int, nargs='?', default='', help='Seed for reproducibility')
     parser.add_argument('debug', type=str, help='Whether to run the script in debug mode', default='False')
+    parser.add_argument('model', type=str, help='The model to use for generating completions')
 
     args = parser.parse_args()
 
@@ -204,7 +205,7 @@ if __name__ == "__main__":
     print(f"prompt path: {args.prompt_instruction_path}\n")
 
     try:
-        result = Main.run(args.prompt_instruction_path, args.user_story_path, args.api_key, args.output_dir_path, 1, args.temperature, args.seed, args.debug)
+        result = Main.run(args.prompt_instruction_path, args.user_story_path, args.api_key, args.output_dir_path, 1, args.temperature, args.seed, args.model, args.debug)
         print(result)  # Print the result to stdout
         caminho_output = os.path.join(args.output_dir_path, 'BDD_output.feature')
         with open(caminho_output, 'w', encoding="utf-8") as arquivo:

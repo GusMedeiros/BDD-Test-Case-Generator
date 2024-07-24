@@ -19,6 +19,7 @@ class GenerateFeatureFileAction : AnAction() {
             val temperature = dialog.temperatureSpinner.value.toString()
             val seed = dialog.seedSpinner.value.toString()
             val debug = dialog.debugCheckBox.isSelected.toString()
+            val gptModel = dialog.gptModelComboBox.selectedItem.toString()
 
             if (apiKey.isEmpty() || userStoryPath.isEmpty() || outputDirPath.isEmpty()) {
                 Messages.showMessageDialog(
@@ -30,9 +31,9 @@ class GenerateFeatureFileAction : AnAction() {
                 return
             }
 
-            val (success, featureOutput) = runPythonScript(userStoryPath, apiKey, outputDirPath, temperature, seed, debug)
+            val (success, featureOutput) = runPythonScript(userStoryPath, apiKey, outputDirPath, temperature, seed, debug, gptModel)
             val message = if (success) {
-                "Script python executado com sucesso. Output: $featureOutput"
+                "Script python executado com sucesso."
             } else {
                 "Erro ao executar o script python. Output: $featureOutput"
             }
@@ -46,7 +47,8 @@ class GenerateFeatureFileAction : AnAction() {
         outputDirPath: String,
         temperature: String,
         seed: String,
-        debug: String
+        debug: String,
+        gptModel: String
     ): Pair<Boolean, String> {
         return try {
             val resourceStream = this::class.java.getResourceAsStream("/python/Main.py")
@@ -70,7 +72,8 @@ class GenerateFeatureFileAction : AnAction() {
                 outputDirPath,
                 temperature,
                 seed,
-                debug
+                debug,
+                gptModel
             )
             val process = processBuilder.start()
 
