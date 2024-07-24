@@ -3,6 +3,10 @@ package org.jetbrains.plugins.featurefilegenerator
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.Messages
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -31,13 +35,17 @@ class GenerateFeatureFileAction : AnAction() {
                 return
             }
 
-            val (success, featureOutput) = runPythonScript(userStoryPath, apiKey, outputDirPath, temperature, seed, debug, gptModel)
-            val message = if (success) {
-                "Script python executado com sucesso."
-            } else {
-                "Erro ao executar o script python. Output: $featureOutput"
+            CoroutineScope(Dispatchers.Main).launch {
+                val (success, featureOutput) = withContext(Dispatchers.IO) {
+                    runPythonScript(userStoryPath, apiKey, outputDirPath, temperature, seed, debug, gptModel)
+                }
+                val message = if (success) {
+                    "Script python executado com sucesso."
+                } else {
+                    "Erro ao executar o script python. Output: $featureOutput"
+                }
+                Messages.showMessageDialog(project, message, "Info", Messages.getInformationIcon())
             }
-            Messages.showMessageDialog(project, message, "Info", Messages.getInformationIcon())
         }
     }
 
