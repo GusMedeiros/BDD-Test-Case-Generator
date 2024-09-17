@@ -2,7 +2,10 @@ package org.jetbrains.plugins.featurefilegenerator
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -17,40 +20,110 @@ class GenerateFeatureFileAction : AnAction() {
     override fun actionPerformed(event: AnActionEvent) {
         val project = event.project ?: return
 
-        val dialog = UIPanel(project)
-        if (dialog.showAndGet()) {
-            val apiKey = dialog.apiKeyField.text
-            val userStoryPath = dialog.userStoryPathField.text
-            val outputDirPath = dialog.outputDirPathField.text
-            val temperature = dialog.temperatureSpinner.value.toString()
-            val seed = dialog.seedSpinner.value.toString()
-            val debug = dialog.debugCheckBox.isSelected.toString()
-            val gptModel = dialog.gptModelComboBox.selectedItem.toString()
-
-            if (apiKey.isEmpty() || userStoryPath.isEmpty() || outputDirPath.isEmpty()) {
-                Messages.showMessageDialog(
-                    project,
-                    "Todos os campos são obrigatórios. A operação foi cancelada.",
-                    "Erro",
-                    Messages.getErrorIcon()
-                )
-                return
+        val errors = checkSettings(project)
+        if (errors.isNotEmpty()) {
+            // Juntar todas as mensagens de erro em uma string
+            val errorMessage = errors.joinToString(separator = "\n") {
+                "- $it"
             }
 
-            CoroutineScope(Dispatchers.Main).launch {
-                installRequirements()
-                val (success, featureOutput) = withContext(Dispatchers.IO) {
-                    runPythonScript(userStoryPath, apiKey, outputDirPath, temperature, seed, debug, gptModel)
-                }
-                val message = if (success) {
-                    "Script python executado com sucesso."
-                } else {
-                    "Erro ao executar o script python. Output: $featureOutput"
-                }
-                Messages.showMessageDialog(project, message, "Info", Messages.getInformationIcon())
+            // Exibir a mensagem de erro com todos os detalhes
+            Messages.showMessageDialog(
+                event.project,
+                "Settings are invalid:\n\n$errorMessage",
+                "Error",
+                Messages.getErrorIcon()
+            )
+            return
+        }
+        val userStoryPath: String
+        try {
+            userStoryPath = getUserStoryPath(event)
+        } catch (e: IllegalArgumentException) {
+            Messages.showMessageDialog(event.project, e.message, "Error", Messages.getErrorIcon())
+            return
+        }
+
+        val settings = project.getService(UserSettings::class.java)
+        val state = settings?.state
+        val apiKey = state?.apiKey
+        val outputDirPath = state?.outputDirPath
+        val temperature = state?.temperature
+        val seed = state?.seed
+        val gptModel = state?.gptModel
+        val debug = state?.debug
+
+        requireNotNull(apiKey) { "API Key cannot be null" }
+        requireNotNull(outputDirPath) { "Output Directory Path cannot be null" }
+        requireNotNull(temperature) { "Temperature cannot be null" }
+        requireNotNull(seed) { "Seed cannot be null" }
+        requireNotNull(gptModel) { "GPT Model cannot be null" }
+        requireNotNull(debug) { "Debug cannot be null" }
+
+
+        // Execução do script Python em background
+        CoroutineScope(Dispatchers.Main).launch {
+            installRequirements()  // Se necessário instalar dependências
+            val (success, featureOutput) = withContext(Dispatchers.IO) {
+                runPythonScript(userStoryPath, apiKey, outputDirPath, temperature.toString(),
+                    seed.toString(), debug.toString(), gptModel)
             }
+            val message = if (success) {
+                "Script python executado com sucesso."
+            } else {
+                "Erro ao executar o script python. Output: $featureOutput"
+            }
+            Messages.showMessageDialog(project, message, "Info", Messages.getInformationIcon())
         }
     }
+    fun checkSettings(project: Project): List<String> {
+        val settings = project.getService(UserSettings::class.java)
+        val state = settings?.state
+
+        val errors = mutableListOf<String>()
+
+        if (state?.apiKey.isNullOrEmpty()) {
+            errors.add("API Key is missing or invalid.")
+        }
+
+        if (state?.outputDirPath.isNullOrEmpty()) {
+            errors.add("Output Directory Path is missing.")
+        }
+
+        if (state?.temperature == null || state.temperature !in 0.0..2.0) {
+            errors.add("Temperature is out of range (must be between 0.0 and 2.0).")
+        }
+
+        if (state?.seed == null) {
+            errors.add("Seed value is missing.")
+        }
+
+        if (state?.gptModel.isNullOrEmpty()) {
+            errors.add("GPT Model is missing or invalid.")
+        }
+
+        return errors
+    }
+
+    private fun getUserStoryPath(event: AnActionEvent): String {
+        // Tenta obter o arquivo aberto no editor
+        val editorFile: VirtualFile? = event.getData(CommonDataKeys.VIRTUAL_FILE)
+
+        // Se o editorFile for nulo, tenta obter o arquivo selecionado no Project View
+        val projectViewFile: VirtualFile? = event.getData(CommonDataKeys.VIRTUAL_FILE)
+
+        // Prioriza o arquivo no editor, caso contrário, tenta o Project View
+        val selectedFile = editorFile ?: projectViewFile
+
+        if (selectedFile != null) {
+            // Obter o caminho do arquivo
+            return selectedFile.path
+        } else {
+            // Lança uma exceção se nenhum arquivo foi encontrado
+            throw IllegalArgumentException("Nenhum arquivo foi selecionado.")
+        }
+    }
+
 
     private fun runPythonScript(
         userStoryFilepath: String,
@@ -106,7 +179,7 @@ class GenerateFeatureFileAction : AnAction() {
 
     fun installRequirements() {
         // Carregar o arquivo requirements.txt do resources
-        val resourcePath = "resources/python/requirements.txt"
+        val resourcePath = "python/requirements.txt"
         val inputStream: InputStream = this::class.java.classLoader.getResourceAsStream(resourcePath)
             ?: throw IllegalArgumentException("Arquivo $resourcePath não encontrado.")
 

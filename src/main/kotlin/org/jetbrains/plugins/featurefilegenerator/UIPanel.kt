@@ -14,7 +14,6 @@ import kotlin.math.absoluteValue
 import kotlin.random.Random
 
 class UIPanel(private val project: com.intellij.openapi.project.Project) : DialogWrapper(true) {
-    val userStoryPathField = JTextField()
     val outputDirPathField = JTextField()
     val debugCheckBox = JCheckBox("Debug")
     val temperatureSpinner = JSpinner(SpinnerNumberModel(0.0, 0.0, 2.0, 0.1)).apply {
@@ -34,7 +33,7 @@ class UIPanel(private val project: com.intellij.openapi.project.Project) : Dialo
 
     init {
         init()
-        title = "Generate Feature File"
+        title = "BDDGPT Settings"
         loadModelsButton.addActionListener { populateGptModelComboBox() }
         apiKeyField.document.addDocumentListener(object : javax.swing.event.DocumentListener {
             override fun insertUpdate(e: javax.swing.event.DocumentEvent?) {
@@ -57,17 +56,6 @@ class UIPanel(private val project: com.intellij.openapi.project.Project) : Dialo
                 cell(apiKeyField)
                     .horizontalAlign(HorizontalAlign.FILL)
                 cell(createTooltipLabel("Enter OpenAI API key here"))
-            }
-            row("User Story file:") {
-                cell(userStoryPathField)
-                    .horizontalAlign(HorizontalAlign.FILL)
-                    .resizableColumn()
-                button("Explore") {
-                    val descriptor = FileChooserDescriptor(true, false, false, false, false, false)
-                    val file = FileChooser.chooseFile(descriptor, project, null)
-                    file?.let { userStoryPathField.text = it.path }
-                }
-                cell(createTooltipLabel("Select the user story file"))
             }
             row("Output Directory:") {
                 cell(outputDirPathField)
@@ -126,7 +114,6 @@ class UIPanel(private val project: com.intellij.openapi.project.Project) : Dialo
             val resourceStream = this::class.java.getResourceAsStream("/python/list_models.py")
                 ?: throw Exception("Resource not found: /python/list_models.py")
 
-            // Create a temporary file to store the script content
             val tempScriptFile = Files.createTempFile("list_models", ".py")
             resourceStream.bufferedReader().use { reader ->
                 Files.newBufferedWriter(tempScriptFile).use { writer ->
@@ -139,21 +126,18 @@ class UIPanel(private val project: com.intellij.openapi.project.Project) : Dialo
             processBuilder.environment()["OPENAI_API_KEY"] = apiKey
             val process = processBuilder.start()
 
-            // Capture stdout and stderr
             val stdoutReader = BufferedReader(InputStreamReader(process.inputStream))
             val stderrReader = BufferedReader(InputStreamReader(process.errorStream))
 
             val modelList = mutableListOf<String>()
             var line: String?
 
-            // Read stdout
             line = stdoutReader.readLine()
             while (line != null) {
                 modelList.add(line)
                 line = stdoutReader.readLine()
             }
 
-            // Check for errors
             val errorList = mutableListOf<String>()
             line = stderrReader.readLine()
             while (line != null) {
@@ -172,7 +156,6 @@ class UIPanel(private val project: com.intellij.openapi.project.Project) : Dialo
                 gptModelComboBox.model = DefaultComboBoxModel(modelList.toTypedArray())
             }
 
-            // Clean up the temporary file
             Files.deleteIfExists(tempScriptFile)
         } catch (e: Exception) {
             e.printStackTrace()
