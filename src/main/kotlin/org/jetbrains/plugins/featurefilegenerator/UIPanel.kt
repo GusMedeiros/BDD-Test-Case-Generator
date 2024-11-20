@@ -3,8 +3,8 @@ package org.jetbrains.plugins.featurefilegenerator
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.nio.file.Files
@@ -86,12 +86,12 @@ class UIPanel(private val project: com.intellij.openapi.project.Project) : Dialo
         return panel {
             row("Api Key:") {
                 cell(apiKeyField)
-                    .horizontalAlign(HorizontalAlign.FILL)
+                    .align(AlignX.LEFT)
                 cell(createTooltipLabel("Enter OpenAI API key here"))
             }
             row("Output Directory:") {
                 cell(outputDirPathField)
-                    .horizontalAlign(HorizontalAlign.FILL)
+                    .align(AlignX.LEFT)
                     .resizableColumn()
                 button("Explore") {
                     val descriptor = FileChooserDescriptor(false, true, false, false, false, false)
@@ -103,13 +103,14 @@ class UIPanel(private val project: com.intellij.openapi.project.Project) : Dialo
 
             row("Fixed Seed:") {
                 cell(fixedSeedCheckBox)
-                    .horizontalAlign(HorizontalAlign.LEFT)
+                    .align(AlignX.LEFT)
                 cell(createTooltipLabel("Enable fixed seed to enter a seed value manually"))
             }
 
+
             row("Seed:") {
                 cell(seedSpinner)
-                    .horizontalAlign(HorizontalAlign.FILL)
+                    .align(AlignX.LEFT)
                 cell(generateButton) // Adiciona o botão "Generate"
                 cell(createTooltipLabel("Default: Random Int+. Generate new value manually if Fixed Seed is enabled"))
             }
@@ -120,13 +121,13 @@ class UIPanel(private val project: com.intellij.openapi.project.Project) : Dialo
             }
             row("GPT Models:") {
                 cell(gptModelComboBox)
-                    .horizontalAlign(HorizontalAlign.FILL)
+                    .align(AlignX.LEFT)
                 cell(loadModelsButton)
                 cell(createTooltipLabel("Load models after entering a valid API key"))
             }
             row {
                 cell(debugCheckBox)
-                    .horizontalAlign(HorizontalAlign.LEFT)
+                    .align(AlignX.LEFT)
                 cell(createTooltipLabel("Enable debug mode"))
             }
         }
