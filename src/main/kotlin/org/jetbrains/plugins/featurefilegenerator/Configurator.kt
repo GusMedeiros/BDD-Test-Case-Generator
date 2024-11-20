@@ -81,8 +81,8 @@ class Configurator(private val project: Project) {
             }
 
             // Validação da temperatura
-            if (temperature !in 0.0..1.0) {
-                println("Erro: Temperatura fora do intervalo permitido (0.0 a 1.0): temperature=$temperature")
+            if (temperature !in 0.0..2.0) {
+                println("Erro: Temperatura fora do intervalo permitido (0.0 a 2.0): temperature=$temperature")
                 return false
             }
 
