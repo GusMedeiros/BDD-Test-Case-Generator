@@ -16,9 +16,12 @@ import kotlin.random.Random
 class UIPanel(private val project: com.intellij.openapi.project.Project) : DialogWrapper(true) {
     val outputDirPathField = JTextField()
     val debugCheckBox = JCheckBox("Debug")
-    val temperatureSpinner = JSpinner(SpinnerNumberModel(0.0, 0.0, 2.0, 0.1)).apply {
-        editor = JSpinner.NumberEditor(this, "1.0")
+    val temperatureSpinner = JSpinner(SpinnerNumberModel(1.0, 0.0, 2.0, 0.1)).apply {
+        editor = JSpinner.NumberEditor(this, "0.0") // Formato compatível com valores decimais
     }
+
+
+
     val apiKeyField = JTextField().apply {
         preferredSize = java.awt.Dimension(300, preferredSize.height)
     }
@@ -34,10 +37,10 @@ class UIPanel(private val project: com.intellij.openapi.project.Project) : Dialo
         }
         seedSpinner.isVisible = false
     }
-
-
-
     val gptModelComboBox = JComboBox<String>()
+
+
+
 
     init {
         init()
@@ -59,6 +62,27 @@ class UIPanel(private val project: com.intellij.openapi.project.Project) : Dialo
     }
 
     override fun createCenterPanel(): JComponent? {
+        val generateButton = JButton("Generate").apply {
+            isVisible = false // Inicialmente invisível
+            addActionListener {
+                if (fixedSeedCheckBox.isSelected) {
+                    val randomSeed = Random.nextInt().absoluteValue
+                    seedSpinner.value = randomSeed
+                }
+            }
+        }
+
+        fixedSeedCheckBox.addActionListener {
+            val isFixedSeedSelected = fixedSeedCheckBox.isSelected
+            seedSpinner.isVisible = isFixedSeedSelected
+            if (isFixedSeedSelected) {
+                val randomSeed = Random.nextInt().absoluteValue
+                seedSpinner.value = randomSeed
+            }
+
+            generateButton.isVisible = isFixedSeedSelected
+        }
+
         return panel {
             row("Api Key:") {
                 cell(apiKeyField)
@@ -77,18 +101,17 @@ class UIPanel(private val project: com.intellij.openapi.project.Project) : Dialo
                 cell(createTooltipLabel("Select the output directory"))
             }
 
-            // Adicionando a nova linha com o CheckBox FixedSeed
             row("Fixed Seed:") {
                 cell(fixedSeedCheckBox)
                     .horizontalAlign(HorizontalAlign.LEFT)
                 cell(createTooltipLabel("Enable fixed seed to enter a seed value manually"))
             }
 
-            // A linha do Seed Spinner
             row("Seed:") {
                 cell(seedSpinner)
                     .horizontalAlign(HorizontalAlign.FILL)
-                cell(createTooltipLabel("Default: Random Int+. Enter a seed value if you want semi-reproducible results"))
+                cell(generateButton) // Adiciona o botão "Generate"
+                cell(createTooltipLabel("Default: Random Int+. Generate new value manually if Fixed Seed is enabled"))
             }
 
             row("Temperature:") {
@@ -108,6 +131,8 @@ class UIPanel(private val project: com.intellij.openapi.project.Project) : Dialo
             }
         }
     }
+
+
 
     private fun createTooltipLabel(tooltipText: String): JLabel {
         return JLabel("\u2753").apply {
@@ -186,4 +211,38 @@ class UIPanel(private val project: com.intellij.openapi.project.Project) : Dialo
             }
         }
     }
+
+    fun UIPanel.setApiKey(value: String) {
+        apiKeyField.text = value
+    }
+
+    fun UIPanel.setOutputDirPath(value: String) {
+        outputDirPathField.text = value
+    }
+
+    fun UIPanel.setTemperature(value: Double) {
+        temperatureSpinner.value = value
+    }
+
+    fun UIPanel.setFixedSeed(value: Boolean) {
+        fixedSeedCheckBox.isSelected = value
+        seedSpinner.isVisible = value
+    }
+
+    fun UIPanel.setSeed(value: Int) {
+        seedSpinner.value = value
+    }
+
+    fun UIPanel.setDebug(value: Boolean) {
+        debugCheckBox.isSelected = value
+    }
+
+    fun UIPanel.setGptModel(value: String) {
+        if (gptModelComboBox.itemCount == 0) {
+            gptModelComboBox.addItem(value)
+        }
+        gptModelComboBox.selectedItem = value
+    }
+
+
 }

@@ -9,6 +9,16 @@ import org.jetbrains.plugins.featurefilegenerator.UserSettings
 class Configurator(private val project: Project) {
 
     fun showDialogAndConfigure(dialog: UIPanel, configurator: Configurator): Boolean {
+        val userSettings = project.service<UserSettings>()
+        dialog.apply {
+            setApiKey(userSettings.getApiKey())
+            setOutputDirPath(userSettings.getOutputDirPath())
+            setTemperature(userSettings.getTemperature())
+            setFixedSeed(userSettings.getFixedSeed())
+            setSeed(userSettings.getSeed())
+            setDebug(userSettings.getDebug())
+            setGptModel(userSettings.getGptModel())
+        }
         val closedWithOk = dialog.showAndGet()
         if(closedWithOk) {
             configurator.configure(dialog)
@@ -28,7 +38,7 @@ class Configurator(private val project: Project) {
         val gptModel = dialog.gptModelComboBox.selectedItem?.toString() ?: ""
 
         // Valida os campos obrigatórios
-        if (!validateInputs(apiKey, outputDirPath)) {
+        if (!validateInputs(apiKey, outputDirPath, temperature, fixedSeed, seed, debug, gptModel)) {
             Messages.showMessageDialog(
                 project,
                 "Todos os campos são obrigatórios. A operação foi cancelada.",
@@ -44,9 +54,57 @@ class Configurator(private val project: Project) {
         return true
     }
 
-    private fun validateInputs(apiKey: String, outputDirPath: String): Boolean {
-        return apiKey.isNotEmpty() && outputDirPath.isNotEmpty()
+    private fun validateInputs(
+        apiKey: String?,
+        outputDirPath: String?,
+        temperature: Double?,
+        fixedSeed: Boolean?,
+        seed: Int?,
+        debug: Boolean?,
+        gptModel: String?
+    ): Boolean {
+        try {
+            // Verificar se algum valor está indefinido (nulo)
+            if (apiKey == null || outputDirPath == null || temperature == null ||
+                fixedSeed == null || seed == null || debug == null || gptModel == null
+            ) {
+                println("Erro: Um ou mais valores estão nulos:")
+                println("apiKey=$apiKey, outputDirPath=$outputDirPath, temperature=$temperature, fixedSeed=$fixedSeed, seed=$seed, debug=$debug, gptModel=$gptModel")
+                return false
+            }
+
+            // Validação de campos obrigatórios
+            if (apiKey.isEmpty() || outputDirPath.isEmpty() || gptModel.isEmpty()) {
+                println("Erro: Um ou mais campos obrigatórios estão vazios:")
+                println("apiKey=$apiKey, outputDirPath=$outputDirPath, gptModel=$gptModel")
+                return false
+            }
+
+            // Validação da temperatura
+            if (temperature !in 0.0..1.0) {
+                println("Erro: Temperatura fora do intervalo permitido (0.0 a 1.0): temperature=$temperature")
+                return false
+            }
+
+            // Validação do seed com base em fixedSeed
+            if (fixedSeed) {
+                if (seed < 0) {
+                    println("Erro: Seed inválido. Deve ser não-negativo quando fixedSeed está habilitado. seed=$seed")
+                    throw IllegalArgumentException("Seed deve ser um valor não-negativo quando fixedSeed está habilitado.")
+                }
+            }
+
+            // Todos os valores são válidos
+            println("Validação bem-sucedida: Todos os valores são válidos.")
+            return true
+        } catch (e: Exception) {
+            // Captura exceções de validação e retorna false
+            println("Exceção capturada durante a validação: ${e.message}")
+            return false
+        }
     }
+
+
 
     private fun saveSettings(
         apiKey: String,

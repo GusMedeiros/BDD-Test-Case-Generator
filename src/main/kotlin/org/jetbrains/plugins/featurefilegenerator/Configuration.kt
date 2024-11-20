@@ -14,7 +14,7 @@ class UserSettings : PersistentStateComponent<UserSettings.State> {
     data class State(
         var apiKey: String = "",
         var outputDirPath: String = "",
-        var temperature: Double = 0.0,
+        var temperature: Double = 1.0,
         var seed: Int = 0,
         var fixedSeed: Boolean = false,
         var gptModel: String = "",
@@ -75,5 +75,6 @@ class UserSettings : PersistentStateComponent<UserSettings.State> {
     fun getApiKey() = state.apiKey
     fun getSeed() = state.seed
     fun getGptModel() = state.gptModel
-
+    fun getFixedSeed() = state.fixedSeed
+    fun getDebug() = state.debug
 }
