@@ -28,6 +28,14 @@ class UIPanel(private val project: com.intellij.openapi.project.Project) : Dialo
     val seedSpinner = JSpinner(SpinnerNumberModel(Random.nextInt().absoluteValue, 0, Integer.MAX_VALUE, 1)).apply {
         preferredSize = java.awt.Dimension(200, preferredSize.height)
     }
+    val fixedSeedCheckBox = JCheckBox("Fixed Seed").apply {
+        addActionListener {
+            seedSpinner.isVisible = isSelected // Exibe o seedSpinner se estiver selecionado, esconde caso contrário
+        }
+        seedSpinner.isVisible = false
+    }
+
+
 
     val gptModelComboBox = JComboBox<String>()
 
@@ -69,11 +77,20 @@ class UIPanel(private val project: com.intellij.openapi.project.Project) : Dialo
                 cell(createTooltipLabel("Select the output directory"))
             }
 
+            // Adicionando a nova linha com o CheckBox FixedSeed
+            row("Fixed Seed:") {
+                cell(fixedSeedCheckBox)
+                    .horizontalAlign(HorizontalAlign.LEFT)
+                cell(createTooltipLabel("Enable fixed seed to enter a seed value manually"))
+            }
+
+            // A linha do Seed Spinner
             row("Seed:") {
                 cell(seedSpinner)
                     .horizontalAlign(HorizontalAlign.FILL)
                 cell(createTooltipLabel("Default: Random Int+. Enter a seed value if you want semi-reproducible results"))
             }
+
             row("Temperature:") {
                 cell(temperatureSpinner)
                 cell(createTooltipLabel("Set the temperature for the model (default is 1)"))

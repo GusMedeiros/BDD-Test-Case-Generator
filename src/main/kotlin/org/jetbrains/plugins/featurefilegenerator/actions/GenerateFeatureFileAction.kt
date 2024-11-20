@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.featurefilegenerator
+package org.jetbrains.plugins.featurefilegenerator.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -10,17 +10,26 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.featurefilegenerator.UIPanel
+import org.jetbrains.plugins.featurefilegenerator.UserSettings
 import java.io.File
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.*
+import kotlin.math.absoluteValue
+import kotlin.random.Random
 
 class GenerateFeatureFileAction : AnAction() {
     override fun actionPerformed(event: AnActionEvent) {
         val project = event.project ?: return
+        val dialog = UIPanel(project)
+        val configurator = Configurator(project)
 
-        val errors = checkSettings(project)
+        configurator.showDialogAndConfigure(dialog, configurator)
+
+        val errors = checkSettings(project) // Checa se há configuração antes de rodar
+
         if (errors.isNotEmpty()) {
             // Juntar todas as mensagens de erro em uma string
             val errorMessage = errors.joinToString(separator = "\n") {
@@ -36,6 +45,7 @@ class GenerateFeatureFileAction : AnAction() {
             )
             return
         }
+
         val userStoryPath: String
         try {
             userStoryPath = getUserStoryPath(event)
@@ -49,7 +59,13 @@ class GenerateFeatureFileAction : AnAction() {
         val apiKey = state?.apiKey
         val outputDirPath = state?.outputDirPath
         val temperature = state?.temperature
-        val seed = state?.seed
+        val fixedSeed = state?.fixedSeed
+        val seed = if (fixedSeed == true) {
+            requireNotNull(state.seed) { "Seed value cannot be null when FixedSeed is true." }
+            state.seed
+        } else {
+            Random.nextInt().absoluteValue
+        }
         val gptModel = state?.gptModel
         val debug = state?.debug
 
@@ -57,6 +73,7 @@ class GenerateFeatureFileAction : AnAction() {
         requireNotNull(outputDirPath) { "Output Directory Path cannot be null" }
         requireNotNull(temperature) { "Temperature cannot be null" }
         requireNotNull(seed) { "Seed cannot be null" }
+        requireNotNull(fixedSeed) { "FixedSeed cannot be null" }
         requireNotNull(gptModel) { "GPT Model cannot be null" }
         requireNotNull(debug) { "Debug cannot be null" }
 
@@ -69,12 +86,13 @@ class GenerateFeatureFileAction : AnAction() {
                     seed.toString(), debug.toString(), gptModel)
             }
             val message = if (success) {
-                "Script python executado com sucesso."
+                "Script python executado com sucesso.\nSeed utilizada: $seed"
             } else {
-                "Erro ao executar o script python. Output: $featureOutput"
+                "Erro ao executar o script python. Output: $featureOutput\nSeed utilizada: $seed"
             }
             Messages.showMessageDialog(project, message, "Info", Messages.getInformationIcon())
         }
+
     }
     fun checkSettings(project: Project): List<String> {
         val settings = project.getService(UserSettings::class.java)

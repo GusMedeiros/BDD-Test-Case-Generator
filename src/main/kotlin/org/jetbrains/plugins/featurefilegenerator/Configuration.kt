@@ -16,6 +16,7 @@ class UserSettings : PersistentStateComponent<UserSettings.State> {
         var outputDirPath: String = "",
         var temperature: Double = 0.0,
         var seed: Int = 0,
+        var fixedSeed: Boolean = false,
         var gptModel: String = "",
         var debug: Boolean = false
     )
@@ -51,11 +52,20 @@ class UserSettings : PersistentStateComponent<UserSettings.State> {
     }
 
     fun setSeed(seed: Int) {
-        state.seed = seed
+        if (state.fixedSeed) {
+            require(seed >= 0) { "Seed deve ser um valor não-negativo quando fixedSeed estiver habilitado." }
+            state.seed = seed
+        } else {
+            throw IllegalStateException("Não é permitido definir uma seed quando fixedSeed está desabilitado.")
+        }
     }
 
     fun setGptModel(gptModel: String) {
         state.gptModel = gptModel
+    }
+
+    fun setFixedSeed(fixedSeed: Boolean) {
+        state.fixedSeed = fixedSeed
     }
 
     // Métodos getters
@@ -65,4 +75,5 @@ class UserSettings : PersistentStateComponent<UserSettings.State> {
     fun getApiKey() = state.apiKey
     fun getSeed() = state.seed
     fun getGptModel() = state.gptModel
+
 }

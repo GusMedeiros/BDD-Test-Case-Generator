@@ -5,15 +5,15 @@
     <vendor>JetBrains</vendor>
 
     <actions>
-        <action id="org.jetbrains.plugins.featurefilegenerator.GenerateFeatureFileAction"
-                class="org.jetbrains.plugins.featurefilegenerator.GenerateFeatureFileAction"
+        <action id="org.jetbrains.plugins.featurefilegenerator.actions.GenerateFeatureFileAction"
+                class="org.jetbrains.plugins.featurefilegenerator.actions.GenerateFeatureFileAction"
                 text="Generate Feature File"
                 description="Generates a .feature file from a text file">
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>.
         </action>
-        <action id="org.jetbrains.plugins.featurefilegenerator.ChangeConfigsAction"
-                class="org.jetbrains.plugins.featurefilegenerator.ChangeConfigsAction"
+        <action id="org.jetbrains.plugins.featurefilegenerator.actions.ChangeConfigsAction"
+                class="org.jetbrains.plugins.featurefilegenerator.actions.ChangeConfigsAction"
                 text="Change BDDGPT settings"
                 description="Asks the user the desired configs for BDDGPT">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
