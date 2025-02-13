@@ -4,6 +4,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.XCollection
 import java.io.File
 
 @State(
@@ -15,14 +18,124 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
     private var myState: State = State()
 
     class State {
+        @XCollection(propertyElementName = "configurations")
         var configurations: MutableList<LLMConfiguration> = mutableListOf()
     }
 
+    @Tag("LLMConfiguration")
     data class LLMConfiguration(
+        @Attribute("name")
         var name: String = "",
+
+        @Attribute("scriptFilePath")
         var scriptFilePath: String = "",
-        var parameterSpecFilePath: String = ""
+
+        @Attribute("parameterSpecFilePath")
+        var parameterSpecFilePath: String = "",
+
+        @XCollection(propertyElementName = "parameters")
+        var namedParameters: MutableList<NamedParameter> = mutableListOf()
     )
+
+    /**
+     * Alteração: Substituímos `sealed class` por `open class` para permitir serialização XML.
+     */
+    @Tag("NamedParameter")
+    open class NamedParameter(
+        @Attribute("key")
+        open val key: String = "",
+
+        @Attribute("required")
+        open val required: Boolean = false,
+
+        @Attribute("description")
+        open val description: String = ""
+    )
+
+    @Tag("StringParam")
+    class StringParam(
+        key: String = "",
+        required: Boolean = false,
+        description: String = "",
+        @Attribute("value")
+        var value: String = ""
+    ) : NamedParameter(key, required, description)
+
+    @Tag("IntParam")
+    class IntParam(
+        key: String = "",
+        required: Boolean = false,
+        description: String = "",
+        @Attribute("value")
+        var value: Int = 0,
+        @Attribute("min")
+        val min: Int = Int.MIN_VALUE,
+        @Attribute("max")
+        val max: Int = Int.MAX_VALUE,
+        @Attribute("step")
+        val step: Int = 1
+    ) : NamedParameter(key, required, description)
+
+    @Tag("DoubleParam")
+    class DoubleParam(
+        key: String = "",
+        required: Boolean = false,
+        description: String = "",
+        @Attribute("value")
+        var value: Double = 0.0,
+        @Attribute("min")
+        val min: Double = Double.MIN_VALUE,
+        @Attribute("max")
+        val max: Double = Double.MAX_VALUE,
+        @Attribute("step")
+        val step: Double = 0.1
+    ) : NamedParameter(key, required, description)
+
+    @Tag("BooleanParam")
+    class BooleanParam(
+        key: String = "",
+        required: Boolean = false,
+        description: String = "",
+        @Attribute("value")
+        var value: Boolean = false
+    ) : NamedParameter(key, required, description)
+
+    @Tag("FilePathParam")
+    class FilePathParam(
+        key: String = "",
+        required: Boolean = false,
+        description: String = "",
+        @Attribute("value")
+        var value: String = ""
+    ) : NamedParameter(key, required, description)
+
+    @Tag("ListParam")
+    class ListParam(
+        key: String = "",
+        required: Boolean = false,
+        description: String = "",
+        @Attribute("value")
+        var value: String = "",
+        @XCollection
+        val allowedValues: List<String> = emptyList()
+    ) : NamedParameter(key, required, description)
+
+    @Tag("OptionalParam")
+    class OptionalParam(
+        key: String = "",
+        required: Boolean = false,
+        description: String = "",
+        @Attribute("value")
+        var value: String? = null,
+        @Attribute("enabled")
+        var enabled: Boolean = false,
+        @Attribute("min")
+        val min: Int = Int.MIN_VALUE,
+        @Attribute("max")
+        val max: Int = Int.MAX_VALUE,
+        @Attribute("step")
+        val step: Int = 1
+    ) : NamedParameter(key, required, description)
 
     companion object {
         fun getInstance(): LLMSettings {
@@ -38,11 +151,6 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         myState = state
     }
 
-    // Método para adicionar uma nova configuração de LLM
-    fun isValidFilePath(path: String): Boolean {
-        return File(path).exists()
-    }
-
     fun addConfiguration(config: LLMConfiguration) {
         if (!isValidFilePath(config.scriptFilePath) || !isValidFilePath(config.parameterSpecFilePath)) {
             throw IllegalArgumentException("Invalid file path(s) provided.")
@@ -54,18 +162,14 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         }
     }
 
-
-    // Método para remover uma configuração de LLM
     fun removeConfiguration(config: LLMConfiguration) {
         myState.configurations.remove(config)
     }
 
-    // Método para obter todas as configurações de LLM
     fun getConfigurations(): List<LLMConfiguration> {
         return myState.configurations
     }
 
-    // Método para atualizar uma configuração existente
     fun updateConfiguration(oldConfig: LLMConfiguration, newConfig: LLMConfiguration) {
         val index = myState.configurations.indexOf(oldConfig)
         if (index != -1) {
@@ -73,7 +177,6 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         }
     }
 
-    // Método para buscar uma configuração por nome
     fun getConfigurationByName(name: String): LLMConfiguration? {
         return myState.configurations.find { it.name == name }
     }
@@ -85,5 +188,9 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
     fun replaceConfigurations(newConfigurations: List<LLMConfiguration>) {
         myState.configurations.clear()
         myState.configurations.addAll(newConfigurations)
+    }
+
+    private fun isValidFilePath(path: String): Boolean {
+        return File(path).exists()
     }
 }
