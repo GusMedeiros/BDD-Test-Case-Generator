@@ -123,7 +123,7 @@ class LLMConfigurationPanel : JPanel(BorderLayout()) {
             val specifications = loadParameterSpecifications(configField.text)
             for (spec in specifications) {
                 val paramName = spec["name"]?.toString() ?: "Unnamed"
-                val component = createUIComponentForParameter(spec)
+                val component = createUIComponentForParameter(spec, null)
                 addRow(paramName, component)
             }
         }
@@ -154,13 +154,71 @@ class LLMConfigurationPanel : JPanel(BorderLayout()) {
             return
         }
 
+        val gbc = GridBagConstraints().apply {
+            anchor = GridBagConstraints.WEST
+            fill = GridBagConstraints.HORIZONTAL
+            gridy = 0
+            insets = Insets(5, 5, 5, 5)
+        }
+
+        fun addRow(label: String, component: JComponent) {
+            gbc.gridx = 0
+            gbc.weightx = 0.0
+            dynamicPanel.add(JBLabel(label), gbc)
+
+            gbc.gridx = 1
+            gbc.weightx = 1.0
+            dynamicPanel.add(component, gbc)
+            gbc.gridy++
+
+            parameterFieldMap[label] = component
+        }
+
+        // Preencher os campos principais com valores da configuração existente
+        val nameField = JBTextField(existingConfig.name)
+        addRow("Nome da LLM:", nameField)
+
+        val scriptField = JBTextField(existingConfig.scriptFilePath)
+        val scriptButton = JButton("Procurar").apply {
+            addActionListener {
+                val fileChooser = JFileChooser()
+                fileChooser.fileFilter = FileNameExtensionFilter("Arquivos de Script", "sh", "bat", "py")
+                if (fileChooser.showOpenDialog(this@LLMConfigurationPanel) == JFileChooser.APPROVE_OPTION) {
+                    scriptField.text = fileChooser.selectedFile.absolutePath
+                }
+            }
+        }
+        addRow("Selecionar Arquivo de Script:", createHorizontalPanel(scriptField, scriptButton))
+
+        val configField = JBTextField(existingConfig.parameterSpecFilePath)
+        val configButton = JButton("Procurar").apply {
+            addActionListener {
+                val fileChooser = JFileChooser()
+                fileChooser.fileFilter = FileNameExtensionFilter("Arquivos de Configuração", "json", "yaml", "xml")
+                if (fileChooser.showOpenDialog(this@LLMConfigurationPanel) == JFileChooser.APPROVE_OPTION) {
+                    configField.text = fileChooser.selectedFile.absolutePath
+                    renderExistingConfigurationFields(existingConfig)
+                }
+            }
+        }
+        addRow("Selecionar Arquivo de Configuração:", createHorizontalPanel(configField, configButton))
+
+        val commandField = JBTextField(existingConfig.command)
+        addRow("Comando para o Console:", commandField)
+
+        // Preencher os campos de parâmetros da configuração
         val configPath = existingConfig.parameterSpecFilePath
         if (configPath.isNotBlank() && File(configPath).exists()) {
             val specifications = loadParameterSpecifications(configPath)
 
             for (spec in specifications) {
                 val paramName = spec["name"]?.toString() ?: "Unnamed"
-                val component = createUIComponentForParameter(spec)
+
+                // Buscar o valor existente para esse parâmetro
+                val paramValue = existingConfig.namedParameters.find { it.key == paramName }
+
+                // Passar o valor salvo na configuração para a UI
+                val component = createUIComponentForParameter(spec, paramValue)
                 addRow(paramName, component)
             }
         } else {
@@ -171,8 +229,17 @@ class LLMConfigurationPanel : JPanel(BorderLayout()) {
         dynamicPanel.repaint()
     }
 
-    private fun createUIComponentForParameter(spec: Map<String, Any>): JComponent {
-        val defaultValue = spec["default_value"]?.toString()
+
+    private fun createUIComponentForParameter(spec: Map<String, Any>, existingValue: LLMSettings.NamedParameter?): JComponent {
+        val defaultValue = existingValue?.let {
+            when (it) {
+                is LLMSettings.StringParam -> it.value
+                is LLMSettings.BooleanParam -> it.value.toString()
+                is LLMSettings.ListParam -> it.value
+                is LLMSettings.DoubleParam -> it.value.toString()
+                else -> spec["default_value"]?.toString()
+            }
+        } ?: spec["default_value"]?.toString()
 
         return when (spec["ui_element"]?.toString()) {
             "textfield" -> JBTextField(defaultValue ?: "")
@@ -189,9 +256,10 @@ class LLMConfigurationPanel : JPanel(BorderLayout()) {
                 val value = defaultValue?.toDoubleOrNull() ?: min
                 JSpinner(SpinnerNumberModel(value, min, max, step))
             }
-            else -> JBTextField()
+            else -> JBTextField(defaultValue ?: "")
         }
     }
+
 
     private fun createHorizontalPanel(field: JBTextField, button: JButton): JPanel {
         return JPanel(BorderLayout()).apply {
