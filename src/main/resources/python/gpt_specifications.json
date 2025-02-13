@@ -1,6 +1,7 @@
 [
     {
         "name": "Path do prompt de instrução",
+        "argName": "--prompt_instruction_path",
         "type": "string",
         "required": true,
         "ui_element": "filePicker",
@@ -9,6 +10,7 @@
     },
     {
         "name": "Chave API",
+        "argName": "--api_key",
         "type": "string",
         "required": true,
         "ui_element": "textfield",
@@ -17,6 +19,7 @@
     },
     {
         "name": "Output dir",
+        "argName": "--output_dir_path",
         "type": "string",
         "required": true,
         "ui_element": "filePicker",
@@ -25,6 +28,7 @@
     },
     {
         "name": "Temperatura",
+        "argName": "--temperature",
         "type": "float",
         "required": true,
         "ui_element": "spinner",
@@ -38,6 +42,7 @@
     },
     {
         "name": "Seed",
+        "argName": "--seed",
         "type": "integer",
         "required": false,
         "ui_element": "optionalField",
@@ -51,6 +56,7 @@
     },
     {
         "name": "Debug",
+        "argName": "--debug",
         "type": "boolean",
         "required": false,
         "ui_element": "checkbox",
@@ -59,6 +65,7 @@
     },
     {
         "name": "Modelo",
+        "argName": "--model",
         "type": "string",
         "required": true,
         "ui_element": "combobox",

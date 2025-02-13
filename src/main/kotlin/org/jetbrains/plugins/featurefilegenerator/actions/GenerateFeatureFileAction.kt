@@ -2,11 +2,13 @@ package org.jetbrains.plugins.featurefilegenerator.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.Messages
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.featurefilegenerator.LLMSettings
 import java.io.File
 
@@ -21,66 +23,84 @@ class GenerateFeatureFileAction : AnAction() {
             }
 
         val settings = LLMSettings.getInstance()
-        val config = settings.getConfigurationByName("gpt") // Nome da configuração
+        val selectedLLM = settings.getSelectedLLM()
 
-        if (config == null) {
-            Messages.showErrorDialog("Configuração 'gpt' não encontrada.", "Erro de Configuração")
+        if (selectedLLM.isNullOrBlank()) {
+            Messages.showErrorDialog(
+                "Nenhuma LLM foi selecionada. Configure uma LLM antes de continuar.",
+                "Erro de Configuração"
+            )
             return
         }
 
-        CoroutineScope(Dispatchers.Main).launch {
-            val result = withContext(Dispatchers.IO) {
-                runProcess(config, filePath)
-            }
+        val config = settings.getConfigurationByName(selectedLLM)
 
-            Messages.showMessageDialog(
-                project,
-                result,
-                "Resultado da Execução",
-                Messages.getInformationIcon()
-            )
+        if (config == null) {
+            Messages.showErrorDialog("Configuração '$selectedLLM' não encontrada.", "Erro de Configuração")
+            return
         }
+
+        // Inicia a execução do processo com um indicador de progresso
+        ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Gerando Arquivo .feature", true) {
+            override fun run(indicator: ProgressIndicator) {
+                indicator.text = "Executando script da LLM..."
+                indicator.isIndeterminate = true // Indica que a duração é desconhecida
+
+                val result = runProcess(config, filePath)
+
+                // Exibe o resultado ao usuário
+                CoroutineScope(Dispatchers.Main).launch {
+                    Messages.showMessageDialog(
+                        project,
+                        result,
+                        "Resultado da Execução",
+                        Messages.getInformationIcon()
+                    )
+                }
+            }
+        })
     }
 
     private fun runProcess(config: LLMSettings.LLMConfiguration, filePath: String): String {
         return try {
             val commandList = mutableListOf<String>().apply {
                 add(config.command) // Exemplo: "python"
-                add(config.scriptFilePath) // Exemplo: "A:/Projetos A/Plugin-BDD-GPT/src/main/resources/python/gpt_main.py"
+                add(config.scriptFilePath) // Exemplo: "gpt_main.py" ou "gemini_main.py"
 
-                val paramMap = config.namedParameters.associateBy { it.key }
+                val paramMap = config.namedParameters.associateBy { it.argName }
 
-                // Garantindo que os argumentos são passados como flags nomeadas corretamente
-                add("--prompt_instruction_path")
-                add(paramMap["Path do prompt de instrução"]?.let { (it as? LLMSettings.StringParam)?.value } ?: "")
+                // Adiciona todos os parâmetros definidos na configuração, garantindo o uso de argName
+                config.namedParameters.forEach { param ->
+                    if (param.argName.isNotBlank()) { // Evita argumentos sem nome correto
+                        if (param is LLMSettings.BooleanParam) {
+                            // Para booleanos, só adicionamos a flag se for "true"
+                            if (param.value) add(param.argName)
+                        } else {
+                            add(param.argName)
+                            val value = when (param) {
+                                is LLMSettings.StringParam -> param.value
+                                is LLMSettings.IntParam -> param.value.toString()
+                                is LLMSettings.DoubleParam -> param.value.toString()
+                                is LLMSettings.ListParam -> param.value
+                                else -> ""
+                            }
+                            if (value.isNotBlank()) add(value) // Adiciona o valor apenas se for válido
+                        }
+                    }
+                }
 
+                // Adiciona dinamicamente o caminho do arquivo da história do usuário
                 add("--user_story_path")
-                add(filePath) // O arquivo selecionado
-
-                add("--api_key")
-                add(paramMap["Chave API"]?.let { (it as? LLMSettings.StringParam)?.value } ?: "")
-
-                add("--output_dir_path")
-                add(paramMap["Output dir"]?.let { (it as? LLMSettings.StringParam)?.value } ?: "")
-
-                add("--temperature")
-                add(paramMap["Temperatura"]?.let { (it as? LLMSettings.DoubleParam)?.value.toString() } ?: "0.7")
-
-                add("--model")
-                add(paramMap["Modelo"]?.let { (it as? LLMSettings.StringParam)?.value } ?: "gpt-3.5-turbo")
-
-                if (paramMap.containsKey("Seed")) {
-                    add("--seed")
-                    add(paramMap["Seed"]?.let { (it as? LLMSettings.StringParam)?.value } ?: "")
-                }
-
-                if (paramMap.containsKey("Debug")) {
-                    add("--debug")
-                }
+                add(filePath)
             }
 
+            // Obtém o diretório de saída, se existir
+            val outputDir = config.namedParameters.find { it.argName == "--output_dir_path" }
+                ?.let { (it as? LLMSettings.StringParam)?.value } ?: "."
+
+            // Executa o processo
             val process = ProcessBuilder(commandList)
-                .directory(File(config.namedParameters.find { it.key == "Output dir" }?.let { (it as? LLMSettings.StringParam)?.value } ?: "."))
+                .directory(File(outputDir))
                 .redirectErrorStream(true)
                 .start()
 

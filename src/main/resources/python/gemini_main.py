@@ -63,7 +63,7 @@ def main():
     os.makedirs(args.output_dir_path, exist_ok=True)
 
     # Salvando a resposta no arquivo de saída
-    output_file = os.path.join(args.output_dir_path, "response.txt")
+    output_file = os.path.join(args.output_dir_path, "gemini_output.feature")
     with open(output_file, 'w', encoding='utf-8') as file:
         file.write(result)
 

@@ -29,13 +29,10 @@ class ChangeConfigsAction : AnAction() {
                 val panel = JPanel(BorderLayout())
                 panel.add(configurationPanel, BorderLayout.CENTER)
 
-                // Painel para segurar o botão de exclusão abaixo do ComboBox
                 val bottomPanel = JPanel()
                 bottomPanel.add(deleteButton)
-
                 panel.add(bottomPanel, BorderLayout.SOUTH)
 
-                // Configurar ação do botão de exclusão
                 deleteButton.addActionListener {
                     deleteSelectedConfiguration()
                 }
@@ -60,6 +57,7 @@ class ChangeConfigsAction : AnAction() {
 
                     val required = paramSpec["required"] as? Boolean ?: false
                     val description = paramSpec["description"]?.toString() ?: ""
+                    val argName = paramSpec["argName"]?.toString() ?: "--${key.replace(" ", "_").lowercase()}"
 
                     val param: LLMSettings.NamedParameter? = when {
                         component is JBTextField -> {
@@ -68,10 +66,10 @@ class ChangeConfigsAction : AnAction() {
                                 showError("O campo '$key' é obrigatório e não pode estar vazio.")
                                 return
                             }
-                            LLMSettings.StringParam(key, required, description, textValue)
+                            LLMSettings.StringParam(key, argName, required, description, textValue)
                         }
                         component is JCheckBox -> {
-                            LLMSettings.BooleanParam(key, required, description, component.isSelected)
+                            LLMSettings.BooleanParam(key, argName, required, description, component.isSelected)
                         }
                         component is ComboBox<*> -> {
                             val selectedValue = component.selectedItem?.toString() ?: ""
@@ -80,11 +78,11 @@ class ChangeConfigsAction : AnAction() {
                                 return
                             }
                             val allowedValues = (paramSpec["allowed_values"] as? List<*>)?.map { it.toString() } ?: emptyList()
-                            LLMSettings.ListParam(key, required, description, selectedValue, allowedValues)
+                            LLMSettings.ListParam(key, argName, required, description, selectedValue, allowedValues)
                         }
                         component is JSpinner -> {
                             val value = (component.value as Number).toDouble()
-                            LLMSettings.DoubleParam(key, required, description, value)
+                            LLMSettings.DoubleParam(key, argName, required, description, value)
                         }
                         else -> null
                     }
@@ -92,7 +90,6 @@ class ChangeConfigsAction : AnAction() {
                     param?.let { updatedParams.add(it) }
                 }
 
-                // **Recuperar o campo `command` da interface**
                 val commandField = configurationPanel.parameterFieldMap["Comando para o Console:"] as? JBTextField
                 val updatedCommand = commandField?.text?.trim() ?: existingConfig.command
                 if (updatedCommand.isEmpty()) {
@@ -100,17 +97,15 @@ class ChangeConfigsAction : AnAction() {
                     return
                 }
 
-                // **Correção do Problema com Booleanos**
                 val existingBooleanParams = existingConfig.namedParameters.filterIsInstance<LLMSettings.BooleanParam>()
                 for (param in existingBooleanParams) {
                     if (updatedParams.none { it.key == param.key }) {
                         updatedParams.add(
-                            LLMSettings.BooleanParam(param.key, param.required, param.description, false)
+                            LLMSettings.BooleanParam(param.key, param.argName, param.required, param.description, false)
                         )
                     }
                 }
 
-                // **Criar e salvar a configuração**
                 val updatedConfig = LLMSettings.LLMConfiguration(
                     name = existingConfig.name,
                     scriptFilePath = existingConfig.scriptFilePath,
@@ -120,10 +115,9 @@ class ChangeConfigsAction : AnAction() {
                 )
 
                 llmSettings.updateConfiguration(existingConfig, updatedConfig)
-
+                llmSettings.setSelectedLLM(selectedConfigName)
                 super.doOKAction()
             }
-
 
             private fun deleteSelectedConfiguration() {
                 val selectedConfigName = configurationPanel.configurationComboBox.selectedItem as? String ?: return

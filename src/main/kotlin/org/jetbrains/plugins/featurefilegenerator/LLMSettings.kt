@@ -20,6 +20,17 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
     class State {
         @XCollection(propertyElementName = "configurations")
         var configurations: MutableList<LLMConfiguration> = mutableListOf()
+
+        @Attribute("selectedLLMName")
+        var selectedLLMName: String? = null  // Armazena a LLM selecionada
+    }
+
+    fun getSelectedLLM(): String? {
+        return myState.selectedLLMName
+    }
+
+    fun setSelectedLLM(name: String?) {
+        myState.selectedLLMName = name
     }
 
     @Tag("LLMConfiguration")
@@ -33,7 +44,7 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         @Attribute("parameterSpecFilePath")
         var parameterSpecFilePath: String = "",
 
-        @Attribute("command") // Adicionando o campo command
+        @Attribute("command")
         var command: String = "",
 
         @XCollection(
@@ -48,11 +59,13 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         }
     }
 
-
     @Tag("NamedParameter")
     abstract class NamedParameter(
         @Attribute("key")
         open var key: String = "",
+
+        @Attribute("argName") // Novo campo padronizado para o nome do argumento CLI
+        open var argName: String = "",
 
         @Attribute("required")
         open var required: Boolean = false,
@@ -64,42 +77,47 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
     @Tag("StringParam")
     class StringParam(
         key: String = "",
+        argName: String = "",
         required: Boolean = false,
         description: String = "",
         @Attribute("value")
         var value: String = ""
-    ) : NamedParameter(key, required, description)
+    ) : NamedParameter(key, argName, required, description)
 
     @Tag("IntParam")
     class IntParam(
         key: String = "",
+        argName: String = "",
         required: Boolean = false,
         description: String = "",
         @Attribute("value")
         var value: Int = 0
-    ) : NamedParameter(key, required, description)
+    ) : NamedParameter(key, argName, required, description)
 
     @Tag("DoubleParam")
     class DoubleParam(
         key: String = "",
+        argName: String = "",
         required: Boolean = false,
         description: String = "",
         @Attribute("value")
         var value: Double = 0.0
-    ) : NamedParameter(key, required, description)
+    ) : NamedParameter(key, argName, required, description)
 
     @Tag("BooleanParam")
     class BooleanParam(
         key: String = "",
+        argName: String = "",
         required: Boolean = false,
         description: String = "",
         @Attribute("value")
         var value: Boolean = false
-    ) : NamedParameter(key, required, description)
+    ) : NamedParameter(key, argName, required, description)
 
     @Tag("ListParam")
     class ListParam(
         key: String = "",
+        argName: String = "",
         required: Boolean = false,
         description: String = "",
         @Attribute("value")
@@ -107,7 +125,7 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
 
         @XCollection(propertyElementName = "allowedValues", elementName = "option")
         var allowedValues: List<String> = emptyList()
-    ) : NamedParameter(key, required, description)
+    ) : NamedParameter(key, argName, required, description)
 
     companion object {
         fun getInstance(): LLMSettings {

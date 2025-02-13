@@ -136,7 +136,7 @@ if __name__ == "__main__":
         )
 
         print(result)  # Print the result to stdout
-        output_path = os.path.join(args.output_dir_path, 'BDD_output.feature')
+        output_path = os.path.join(args.output_dir_path, 'gpt_output.feature')
 
         with open(output_path, 'w', encoding="utf-8") as file:
             file.write(result)
