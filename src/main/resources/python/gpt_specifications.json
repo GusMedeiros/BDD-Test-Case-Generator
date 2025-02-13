@@ -8,14 +8,6 @@
         "default_value": ""
     },
     {
-        "name": "Path História de Usuário",
-        "type": "string",
-        "required": true,
-        "ui_element": "filePicker",
-        "description": "Path to the user story",
-        "default_value": ""
-    },
-    {
         "name": "Chave API",
         "type": "string",
         "required": true,
