@@ -113,7 +113,7 @@ if __name__ == "__main__":
     parser.add_argument('--api_key', type=str, required=True, help='OpenAI API key')
     parser.add_argument('--output_dir_path', type=str, required=True, help='Path to the output directory')
     parser.add_argument('--temperature', type=float, required=True, help='Temperature for the model')
-    parser.add_argument('--seed', type=int, default=None, help='Seed for reproducibility')
+    parser.add_argument('--seed', type=int, default=None, nargs='?', help='Seed for reproducibility (optional)')
     parser.add_argument('--debug', action='store_true', help='Whether to run the script in debug mode')
     parser.add_argument('--model', type=str, required=True, choices=["gpt-3.5-turbo", "gpt-4", "gpt-4-32k"],
                         help='The model to use for generating completions')
@@ -130,7 +130,7 @@ if __name__ == "__main__":
             output_dir_path=args.output_dir_path,
             times_to_run=1,
             temperature=args.temperature,
-            seed=args.seed,
+            seed=args.seed,  # Seed agora é opcional
             model=args.model,
             debug=args.debug
         )
