@@ -40,6 +40,7 @@ class ChangeConfigsAction : AnAction() {
                     return
                 }
 
+                // **1. Recuperar os parâmetros da UI**
                 val updatedParams = configurationPanel.parameterFieldMap.mapNotNull { (key, component) ->
                     val paramSpec = configurationPanel.loadParameterSpecifications(existingConfig.parameterSpecFilePath)
                         .find { it["name"]?.toString() == key } ?: return@mapNotNull null
@@ -52,7 +53,8 @@ class ChangeConfigsAction : AnAction() {
                             LLMSettings.StringParam(key, required, description, component.text)
                         }
                         component is JCheckBox -> {
-                            LLMSettings.BooleanParam(key, required, description, component.isSelected)
+                            val booleanValue = component.isSelected
+                            LLMSettings.BooleanParam(key, required, description, booleanValue)
                         }
                         component is ComboBox<*> -> {
                             val selectedValue = component.selectedItem?.toString() ?: ""
@@ -67,8 +69,30 @@ class ChangeConfigsAction : AnAction() {
                     }
                 }.toMutableList()
 
-                // Atualiza a configuração no LLMSettings
-                val updatedConfig = existingConfig.copy(namedParameters = updatedParams)
+                // **2. Recuperar o campo `command` da interface**
+                val commandField = configurationPanel.parameterFieldMap["Comando para o Console:"] as? JBTextField
+                val updatedCommand = commandField?.text ?: existingConfig.command
+
+                // **Correção do Problema com Booleanos**
+                val existingBooleanParams = existingConfig.namedParameters.filterIsInstance<LLMSettings.BooleanParam>()
+                for (param in existingBooleanParams) {
+                    if (updatedParams.none { it.key == param.key }) {
+                        updatedParams.add(
+                            LLMSettings.BooleanParam(param.key, param.required, param.description, false)
+                        ) // Mantemos o valor como `false` se não foi alterado na UI
+                    }
+                }
+
+                // **3. Atualizar a configuração com o campo `command`**
+                val updatedConfig = LLMSettings.LLMConfiguration(
+                    name = existingConfig.name,
+                    scriptFilePath = existingConfig.scriptFilePath,
+                    parameterSpecFilePath = existingConfig.parameterSpecFilePath,
+                    command = updatedCommand, // Adicionando o comando atualizado
+                    namedParameters = updatedParams
+                )
+
+                // **4. Salvar a configuração**
                 llmSettings.updateConfiguration(existingConfig, updatedConfig)
 
                 super.doOKAction()

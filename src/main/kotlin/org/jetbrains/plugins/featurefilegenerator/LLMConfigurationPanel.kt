@@ -238,19 +238,36 @@ class LLMConfigurationPanel : JPanel(BorderLayout()) {
             JOptionPane.showMessageDialog(this, "Os arquivos selecionados não existem!", "Erro", JOptionPane.ERROR_MESSAGE)
             return
         }
+
+        // Verifica se já existe uma configuração com o mesmo nome
+        val existingConfig = llmSettings.getConfigurationByName(name)
+        if (existingConfig != null) {
+            JOptionPane.showMessageDialog(this, "Já existe uma configuração com esse nome!", "Erro", JOptionPane.ERROR_MESSAGE)
+            return
+        }
+
+        // Criar nova configuração
         val newConfiguration = LLMSettings.LLMConfiguration(
             name = name,
             scriptFilePath = scriptPath,
-            parameterSpecFilePath = configPath
+            parameterSpecFilePath = configPath,
+            command = command // Adicionando o campo command aqui
         )
+
+
         try {
+            // Adiciona a nova configuração sem remover as antigas
             llmSettings.addConfiguration(newConfiguration)
-            JOptionPane.showMessageDialog(this, "Nova configuração adicionada com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE)
+
+            // Atualiza apenas a parte do ComboBox
             val updatedConfigurations = llmSettings.getConfigurations().map { it.name } + addNewLabel
             configurationComboBox.model = DefaultComboBoxModel(updatedConfigurations.toTypedArray())
+
+            JOptionPane.showMessageDialog(this, "Nova configuração adicionada com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE)
         } catch (e: Exception) {
-            JOptionPane.showMessageDialog(this, e.message, "Erro", JOptionPane.ERROR_MESSAGE)
+            JOptionPane.showMessageDialog(this, "Erro ao salvar configuração: ${e.message}", "Erro", JOptionPane.ERROR_MESSAGE)
         }
     }
+
 
 }
