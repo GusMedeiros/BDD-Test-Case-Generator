@@ -151,8 +151,12 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         if (!isValidFilePath(config.scriptFilePath) || !isValidFilePath(config.parameterSpecFilePath)) {
             throw IllegalArgumentException("Invalid file path(s) provided.")
         }
-        if (myState.configurations.none { it.name == config.name }) {
-            myState.configurations.add(config)
+
+        // Verifica se já existe uma configuração com o mesmo nome
+        val existingConfig = myState.configurations.find { it.name == config.name }
+
+        if (existingConfig == null) {
+            myState.configurations.add(config) // Adiciona a nova configuração sem apagar as antigas
         } else {
             throw IllegalArgumentException("Configuration with the same name already exists.")
         }
