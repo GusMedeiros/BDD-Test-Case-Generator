@@ -8,11 +8,12 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.Messages
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.featurefilegenerator.LLMSettings
 import java.io.File
 
-class GenerateFeatureFileAction : AnAction() {
+class BatchGenerateFeatureFileAction : AnAction() {
 
     override fun actionPerformed(event: AnActionEvent) {
         val project = event.project ?: return
@@ -23,65 +24,52 @@ class GenerateFeatureFileAction : AnAction() {
             }
 
         val settings = LLMSettings.getInstance()
+        val configuredLLMs = settings.getConfigurations()
 
-        error_check(settings)
+        if (configuredLLMs.isEmpty()) {
+            Messages.showErrorDialog("Nenhuma configuração de LLM encontrada.", "Erro de Configuração")
+            return
+        }
 
-        // Já foram asserted em error_check
-        val selectedLLM = settings.getSelectedLLM()!!
-        val config = settings.getConfigurationByName(selectedLLM)!!
+        // Lançar cada LLM em paralelo
+        CoroutineScope(Dispatchers.IO).launch {
+            val jobs = configuredLLMs.map { config ->
+                launch {
+                    ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Gerando Arquivo .feature (${config.name})", true) {
+                        override fun run(indicator: ProgressIndicator) {
+                            indicator.text = "Executando script da LLM: ${config.name}..."
+                            indicator.isIndeterminate = true
 
-        // Inicia a execução do processo com um indicador de progresso
-        ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Gerando Arquivo .feature", true) {
-            override fun run(indicator: ProgressIndicator) {
-                indicator.text = "Executando script da LLM..."
-                indicator.isIndeterminate = true // Indica que a duração é desconhecida
+                            val result = runProcess(config, filePath)
 
-                val result = runProcess(config, filePath)
-
-                // Exibe o resultado ao usuário
-                CoroutineScope(Dispatchers.Main).launch {
-                    Messages.showMessageDialog(
-                        project,
-                        result,
-                        "Resultado da Execução",
-                        Messages.getInformationIcon()
-                    )
+//                            // Executar na UI Thread usando invokeLater
+//                            ApplicationManager.getApplication().invokeLater {
+//                                Messages.showMessageDialog(
+//                                    project,
+//                                    result,
+//                                    "Resultado da Execução (${config.name})",
+//                                    Messages.getInformationIcon()
+//                                )
+//                            }
+                        }
+                    })
                 }
             }
-        })
-    }
 
-    private fun error_check(settings: LLMSettings, ) {
-        val selectedLLM = settings.getSelectedLLM()
-
-        if (selectedLLM.isNullOrBlank()) {
-            Messages.showErrorDialog(
-                "Nenhuma LLM foi selecionada. Configure uma LLM antes de continuar.",
-                "Erro de Configuração"
-            )
-            return
-        }
-
-        val config = settings.getConfigurationByName(selectedLLM)
-
-        if (config == null) {
-            Messages.showErrorDialog("Configuração '$selectedLLM' não encontrada.", "Erro de Configuração")
-            return
+            // Aguarda todas as execuções paralelas finalizarem
+            jobs.joinAll()
         }
     }
+
     private fun runProcess(config: LLMSettings.LLMConfiguration, filePath: String): String {
         return try {
             val commandList = mutableListOf<String>().apply {
                 add(config.command) // Exemplo: "python"
-                add(config.scriptFilePath) // Exemplo: "gpt_main.py" ou "gemini_main.py"
+                add(config.scriptFilePath) // Exemplo: "gpt_main.py"
 
-                val paramMap = config.namedParameters.associateBy { it.argName }
-
-                // Adiciona todos os parâmetros definidos na configuração, garantindo o uso de argName
                 config.namedParameters.forEach { param ->
-                    if (param.argName.isNotBlank()) { // Evita argumentos sem nome correto
+                    if (param.argName.isNotBlank()) {
                         if (param is LLMSettings.BooleanParam) {
-                            // Para booleanos, só adicionamos a flag se for "true"
                             if (param.value) add(param.argName)
                         } else {
                             add(param.argName)
@@ -92,21 +80,18 @@ class GenerateFeatureFileAction : AnAction() {
                                 is LLMSettings.ListParam -> param.value
                                 else -> ""
                             }
-                            if (value.isNotBlank()) add(value) // Adiciona o valor apenas se for válido
+                            if (value.isNotBlank()) add(value)
                         }
                     }
                 }
 
-                // Adiciona dinamicamente o caminho do arquivo da história do usuário
                 add("--user_story_path")
                 add(filePath)
             }
 
-            // Obtém o diretório de saída, se existir
             val outputDir = config.namedParameters.find { it.argName == "--output_dir_path" }
                 ?.let { (it as? LLMSettings.StringParam)?.value } ?: "."
 
-            // Executa o processo
             val process = ProcessBuilder(commandList)
                 .directory(File(outputDir))
                 .redirectErrorStream(true)
@@ -114,7 +99,7 @@ class GenerateFeatureFileAction : AnAction() {
 
             process.inputStream.bufferedReader().use { it.readText() }
         } catch (e: Exception) {
-            "Erro ao executar o processo: ${e.message}"
+            "Erro ao executar o processo para LLM '${config.name}': ${e.message}"
         }
     }
 }

@@ -19,6 +19,15 @@
                 description="Asks the user the desired configs for BDDGPT">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
+        <action id="org.jetbrains.plugins.featurefilegenerator.actions.BatchGenerateFeatureFileAction"
+                class = "org.jetbrains.plugins.featurefilegenerator.actions.BatchGenerateFeatureFileAction"
+                text = "Batch Generate Feature File"
+                description="Generates a .feature file for each configured LLM">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+
+
+        </action>
     </actions>
 
     <!-- Dependência necessária -->

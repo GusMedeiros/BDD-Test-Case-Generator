@@ -56,7 +56,13 @@
     "required": true,
     "ui_element": "combobox",
     "description": "The model to use for generating completions",
-    "allowed_values": ["gemini-1", "gemini-1.5", "gemini-pro", "gemini-ultra"],
+    "allowed_values": [
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-lite",
+      "gemini-1.5-flash",
+      "gemini-1.5-flash-8b",
+      "gemini-1.5-pro"
+    ],
     "default_value": "gemini-pro"
   }
 ]

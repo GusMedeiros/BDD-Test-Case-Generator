@@ -15,7 +15,6 @@ def main():
     parser.add_argument('--seed', type=int, default=None, help='Seed for reproducibility')
     parser.add_argument('--debug', action='store_true', help='Enable debug mode')
     parser.add_argument('--model', type=str, required=True,
-                        choices=["gemini-1", "gemini-1.5", "gemini-pro", "gemini-ultra"],
                         help='The model to use for generating completions')
 
     args = parser.parse_args()
