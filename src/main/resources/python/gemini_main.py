@@ -2,7 +2,12 @@ import argparse
 import os
 import google.generativeai as genai
 
+
+os.environ["GRPC_VERBOSITY"] = "ERROR"
+os.environ["GLOG_minloglevel"] = "2"
+
 def main():
+
     # Configurando o parser de argumentos com parâmetros nomeados
     parser = argparse.ArgumentParser(description="Parser for the Gemini API script with named arguments")
 

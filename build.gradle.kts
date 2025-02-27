@@ -5,59 +5,96 @@ fun properties(key: String) = providers.gradleProperty(key)
 fun environment(key: String) = providers.environmentVariable(key)
 
 plugins {
-    id("java") // Java support
-    alias(libs.plugins.kotlin) // Kotlin support
-    alias(libs.plugins.gradleIntelliJPlugin) // Gradle IntelliJ Plugin
-    alias(libs.plugins.changelog) // Gradle Changelog Plugin
-    alias(libs.plugins.qodana) // Gradle Qodana Plugin
-    alias(libs.plugins.kover) // Gradle Kover Plugin
+    id("java") // Suporte a Java
+    alias(libs.plugins.kotlin) // Suporte a Kotlin
+    alias(libs.plugins.gradleIntelliJPlugin) // Plugin do IntelliJ
+    alias(libs.plugins.changelog) // Plugin de Changelog
+    alias(libs.plugins.qodana) // Plugin Qodana
+    alias(libs.plugins.kover) // Plugin Kover
+    kotlin("plugin.serialization") version "1.8.20" // ✅ Suporte à serialização JSON
+    id("application") // Suporte para gerar a CLI executável
+    id("com.github.johnrengelman.shadow") version "8.1.1" // Fat jar (Uber Jar)
 }
 
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
 
-// Configure project's dependencies
 repositories {
     mavenCentral()
 }
 
-// Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
-//    implementation(libs.exampleLibrary)
+    implementation(kotlin("stdlib")) // ✅ Inclui a biblioteca padrão do Kotlin
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0") // ✅ Corrotinas
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1") // ✅ Serialização JSON
 }
 
-// Set the JVM language level used to build the project.
 kotlin {
     jvmToolchain(17)
 }
 
-// Configure Gradle IntelliJ Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
+// Configuração do IntelliJ Plugin
 intellij {
     pluginName = properties("pluginName")
     version = properties("platformVersion")
     type = properties("platformType")
-
-    // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file.
     plugins = properties("platformPlugins").map { it.split(',').map(String::trim).filter(String::isNotEmpty) }
 }
 
-// Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
 changelog {
     groups.empty()
     repositoryUrl = properties("pluginRepositoryUrl")
 }
 
-// Configure Gradle Kover Plugin - read more: https://github.com/Kotlin/kotlinx-kover#configuration
 kover {
     reports {
         total {
-            xml {
-                onCheck = true
-            }
+            xml { onCheck = true }
         }
     }
 }
 
+// Configuração para rodar a CLI
+application {
+    mainClass.set("org.jetbrains.plugins.featurefilegenerator.cli.BatchGenerateFeatureCLI")
+}
+
+// Configuração do JAR normal
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = "org.jetbrains.plugins.featurefilegenerator.cli.BatchGenerateFeatureCLI"
+    }
+    from(sourceSets.main.get().output)
+}
+
+// Configuração do Shadow Jar (Fat Jar)
+tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
+    archiveBaseName.set("feature-generator")
+    archiveClassifier.set("all")
+    archiveVersion.set("")
+
+    manifest {
+        attributes["Main-Class"] = "org.jetbrains.plugins.featurefilegenerator.cli.BatchGenerateFeatureCLI"
+    }
+
+    from(sourceSets.main.get().output)
+
+    // ✅ Forma correta de incluir todas as dependências no Gradle moderno
+    val runtimeClasspathFiles = project.configurations.getByName("runtimeClasspath").files
+    runtimeClasspathFiles.forEach { file ->
+        from(zipTree(file))
+    }
+
+    dependencies {
+        include(dependency("org.jetbrains.kotlinx:kotlinx-serialization-json"))
+        include(dependency("org.jetbrains.kotlin:kotlin-stdlib"))
+    }
+
+    mergeServiceFiles()
+}
+
+
+// Configuração de tarefas adicionais
 tasks {
     wrapper {
         gradleVersion = properties("gradleVersion").get()
@@ -68,7 +105,6 @@ tasks {
         sinceBuild = properties("pluginSinceBuild")
         untilBuild = properties("pluginUntilBuild")
 
-        // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
         pluginDescription = providers.fileContents(layout.projectDirectory.file("README.md")).asText.map {
             val start = "<!-- Plugin description -->"
             val end = "<!-- Plugin description end -->"
@@ -81,8 +117,7 @@ tasks {
             }
         }
 
-        val changelog = project.changelog // local variable for configuration cache compatibility
-        // Get the latest available change notes from the changelog file
+        val changelog = project.changelog
         changeNotes = properties("pluginVersion").map { pluginVersion ->
             with(changelog) {
                 renderItem(
@@ -95,8 +130,6 @@ tasks {
         }
     }
 
-    // Configure UI tests plugin
-    // Read more: https://github.com/JetBrains/intellij-ui-test-robot
     runIdeForUiTests {
         systemProperty("robot-server.port", "8082")
         systemProperty("ide.mac.message.dialogs.as.sheets", "false")
@@ -113,9 +146,8 @@ tasks {
     publishPlugin {
         dependsOn("patchChangelog")
         token = environment("PUBLISH_TOKEN")
-        // The pluginVersion is based on the SemVer (https://semver.org) and supports pre-release labels, like 2.1.7-alpha.3
-        // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
-        // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
-        channels = properties("pluginVersion").map { listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" }) }
+        channels = properties("pluginVersion").map {
+            listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" })
+        }
     }
 }
