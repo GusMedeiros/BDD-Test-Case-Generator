@@ -2,13 +2,11 @@ package org.jetbrains.plugins.featurefilegenerator.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.Messages
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.featurefilegenerator.LLMSettings
 import java.io.File
 
@@ -39,7 +37,7 @@ class GenerateFeatureFileAction : AnAction() {
                 val result = runProcess(config, filePath)
 
                 // Exibe o resultado ao usuário
-                CoroutineScope(Dispatchers.Main).launch {
+                ApplicationManager.getApplication().invokeLater {
                     Messages.showMessageDialog(
                         project,
                         result,
