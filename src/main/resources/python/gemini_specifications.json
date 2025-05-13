@@ -1,6 +1,6 @@
 [
   {
-    "name": "Path do prompt de instrução",
+    "name": "Instruction Prompt Path",
     "argName": "--prompt_instruction_path",
     "type": "string",
     "required": true,
@@ -9,7 +9,7 @@
     "default_value": ""
   },
   {
-    "name": "Chave API",
+    "name": "API Key",
     "argName": "--api_key",
     "type": "string",
     "required": true,
@@ -18,7 +18,7 @@
     "default_value": ""
   },
   {
-    "name": "Output dir",
+    "name": "Output Directory",
     "argName": "--output_dir_path",
     "type": "string",
     "required": true,
@@ -27,7 +27,7 @@
     "default_value": ""
   },
   {
-    "name": "Temperatura",
+    "name": "Temperature",
     "argName": "--temperature",
     "type": "float",
     "required": true,
@@ -50,7 +50,7 @@
     "default_value": false
   },
   {
-    "name": "Modelo",
+    "name": "Model",
     "argName": "--model",
     "type": "string",
     "required": true,

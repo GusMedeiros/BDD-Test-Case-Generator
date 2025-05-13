@@ -13,11 +13,11 @@ class BatchGenerateFeatureFileAction : AnAction() {
         val project = event.project ?: return
         val filePath = event.getData(com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE)?.path
             ?: run {
-                Messages.showErrorDialog("Não foi possível obter o caminho do arquivo.", "Erro")
+                Messages.showErrorDialog("Could not retrieve the file path.", "Error")
                 return
             }
 
-        // Usa o LLMSettings do IntelliJ Plugin
+        // Uses LLMSettings from the IntelliJ Plugin
         val llmSettings = LLMSettings.getInstance()
         val executor = LLMExecutor(llmSettings)
 
@@ -26,7 +26,7 @@ class BatchGenerateFeatureFileAction : AnAction() {
                 Messages.showMessageDialog(
                     project,
                     result,
-                    "Resultado da Execução ($llmName)",
+                    "Execution Result ($llmName)",
                     Messages.getInformationIcon()
                 )
             }

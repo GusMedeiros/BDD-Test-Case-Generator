@@ -16,7 +16,7 @@ class GenerateFeatureFileAction : AnAction() {
         val project = event.project ?: return
         val filePath = event.getData(com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE)?.path
             ?: run {
-                Messages.showErrorDialog("Não foi possível obter o caminho do arquivo.", "Erro")
+                Messages.showErrorDialog("Could not retrieve the file path.", "Error")
                 return
             }
 
@@ -24,24 +24,24 @@ class GenerateFeatureFileAction : AnAction() {
 
         error_check(settings)
 
-        // Já foram asserted em error_check
+        // Already asserted in error_check
         val selectedLLM = settings.getSelectedLLM()!!
         val config = settings.getConfigurationByName(selectedLLM)!!
 
-        // Inicia a execução do processo com um indicador de progresso
-        ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Gerando Arquivo .feature", true) {
+        // Start the execution of the process with a progress indicator
+        ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Generating .feature File", true) {
             override fun run(indicator: ProgressIndicator) {
-                indicator.text = "Executando script da LLM..."
-                indicator.isIndeterminate = true // Indica que a duração é desconhecida
+                indicator.text = "Running the LLM script..."
+                indicator.isIndeterminate = true // Indicates unknown duration
 
                 val result = runProcess(config, filePath)
 
-                // Exibe o resultado ao usuário
+                // Display the result to the user
                 ApplicationManager.getApplication().invokeLater {
                     Messages.showMessageDialog(
                         project,
                         result,
-                        "Resultado da Execução",
+                        "Execution Result",
                         Messages.getInformationIcon()
                     )
                 }
@@ -49,13 +49,13 @@ class GenerateFeatureFileAction : AnAction() {
         })
     }
 
-    private fun error_check(settings: LLMSettings, ) {
+    private fun error_check(settings: LLMSettings) {
         val selectedLLM = settings.getSelectedLLM()
 
         if (selectedLLM.isNullOrBlank()) {
             Messages.showErrorDialog(
-                "Nenhuma LLM foi selecionada. Configure uma LLM antes de continuar.",
-                "Erro de Configuração"
+                "No LLM has been selected. Please configure an LLM before continuing.",
+                "Configuration Error"
             )
             return
         }
@@ -63,23 +63,24 @@ class GenerateFeatureFileAction : AnAction() {
         val config = settings.getConfigurationByName(selectedLLM)
 
         if (config == null) {
-            Messages.showErrorDialog("Configuração '$selectedLLM' não encontrada.", "Erro de Configuração")
+            Messages.showErrorDialog("Configuration '$selectedLLM' not found.", "Configuration Error")
             return
         }
     }
+
     private fun runProcess(config: LLMSettings.LLMConfiguration, filePath: String): String {
         return try {
             val commandList = mutableListOf<String>().apply {
-                add(config.command) // Exemplo: "python"
-                add(config.scriptFilePath) // Exemplo: "gpt_main.py" ou "gemini_main.py"
+                add(config.command) // Example: "python"
+                add(config.scriptFilePath) // Example: "gpt_main.py" or "gemini_main.py"
 
                 val paramMap = config.namedParameters.associateBy { it.argName }
 
-                // Adiciona todos os parâmetros definidos na configuração, garantindo o uso de argName
+                // Add all parameters defined in the configuration, ensuring argName usage
                 config.namedParameters.forEach { param ->
-                    if (param.argName.isNotBlank()) { // Evita argumentos sem nome correto
+                    if (param.argName.isNotBlank()) { // Avoid unnamed arguments
                         if (param is LLMSettings.BooleanParam) {
-                            // Para booleanos, só adicionamos a flag se for "true"
+                            // For booleans, only add the flag if it is "true"
                             if (param.value) add(param.argName)
                         } else {
                             add(param.argName)
@@ -90,21 +91,21 @@ class GenerateFeatureFileAction : AnAction() {
                                 is LLMSettings.ListParam -> param.value
                                 else -> ""
                             }
-                            if (value.isNotBlank()) add(value) // Adiciona o valor apenas se for válido
+                            if (value.isNotBlank()) add(value) // Add the value only if valid
                         }
                     }
                 }
 
-                // Adiciona dinamicamente o caminho do arquivo da história do usuário
+                // Dynamically add the user story file path
                 add("--user_story_path")
                 add(filePath)
             }
 
-            // Obtém o diretório de saída, se existir
+            // Get output directory, if it exists
             val outputDir = config.namedParameters.find { it.argName == "--output_dir_path" }
                 ?.let { (it as? LLMSettings.StringParam)?.value } ?: "."
 
-            // Executa o processo
+            // Execute the process
             val process = ProcessBuilder(commandList)
                 .directory(File(outputDir))
                 .redirectErrorStream(true)
@@ -112,7 +113,7 @@ class GenerateFeatureFileAction : AnAction() {
 
             process.inputStream.bufferedReader().use { it.readText() }
         } catch (e: Exception) {
-            "Erro ao executar o processo: ${e.message}"
+            "Error executing the process: ${e.message}"
         }
     }
 }

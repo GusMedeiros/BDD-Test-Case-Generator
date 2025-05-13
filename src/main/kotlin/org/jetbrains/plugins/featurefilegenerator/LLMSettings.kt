@@ -22,7 +22,7 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         var configurations: MutableList<LLMConfiguration> = mutableListOf()
 
         @Attribute("selectedLLMName")
-        var selectedLLMName: String? = null  // Armazena a LLM selecionada
+        var selectedLLMName: String? = null  // Stores the selected LLM
     }
 
     fun getSelectedLLM(): String? {
@@ -64,7 +64,7 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         @Attribute("key")
         open var key: String = "",
 
-        @Attribute("argName") // Novo campo padronizado para o nome do argumento CLI
+        @Attribute("argName") // New standardized field for CLI argument name
         open var argName: String = "",
 
         @Attribute("required")
@@ -139,11 +139,11 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
 
     override fun loadState(state: State) {
         myState = state
-        println("DEBUG: Carregando estado de LLMSettings")
+        println("DEBUG: Loading LLMSettings state")
         myState.configurations.forEach { config ->
-            println("DEBUG: Configuração carregada -> ${config.name}")
+            println("DEBUG: Loaded configuration -> ${config.name}")
             config.namedParameters = ensureNamedParameters(config.namedParameters)
-            println("DEBUG: Parâmetros corrigidos -> ${config.namedParameters}")
+            println("DEBUG: Fixed parameters -> ${config.namedParameters}")
         }
     }
 
@@ -152,11 +152,11 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
             throw IllegalArgumentException("Invalid file path(s) provided.")
         }
 
-        // Verifica se já existe uma configuração com o mesmo nome
+        // Check if a configuration with the same name already exists
         val existingConfig = myState.configurations.find { it.name == config.name }
 
         if (existingConfig == null) {
-            myState.configurations.add(config) // Adiciona a nova configuração sem apagar as antigas
+            myState.configurations.add(config) // Add new config without removing old ones
         } else {
             throw IllegalArgumentException("Configuration with the same name already exists.")
         }
@@ -181,11 +181,11 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         val config = myState.configurations.find { it.name == name }
 
         if (config == null) {
-            println("DEBUG: Nenhuma configuração encontrada com o nome '$name'")
+            println("DEBUG: No configuration found with name '$name'")
         } else {
-            println("DEBUG: Configuração encontrada -> ${config.name}")
+            println("DEBUG: Configuration found -> ${config.name}")
             config.namedParameters = ensureNamedParameters(config.namedParameters)
-            println("DEBUG: Parâmetros corrigidos -> ${config.namedParameters}")
+            println("DEBUG: Fixed parameters -> ${config.namedParameters}")
         }
 
         return config
@@ -202,7 +202,7 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
                     fixedParameters.add(param)
                 }
                 else -> {
-                    println("DEBUG: ⚠ Tipo inesperado encontrado em namedParameters: ${param?.javaClass?.name}")
+                    println("DEBUG: ⚠ Unexpected type found in namedParameters: ${param?.javaClass?.name}")
                 }
             }
         }

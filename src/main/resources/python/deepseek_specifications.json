@@ -1,38 +1,38 @@
 [
   {
-    "name": "Path do prompt de instrução",
+    "name": "Instruction Prompt Path",
     "argName": "--prompt_instruction_path",
     "type": "string",
     "required": true,
     "ui_element": "filePicker",
-    "description": "Caminho do arquivo contendo as instruções do prompt para o modelo",
+    "description": "Path to the file containing prompt instructions for the model",
     "default_value": ""
   },
   {
-    "name": "Chave API",
+    "name": "API Key",
     "argName": "--api_key",
     "type": "string",
     "required": true,
     "ui_element": "textfield",
-    "description": "Chave da API do DeepSeek",
+    "description": "DeepSeek API key",
     "default_value": ""
   },
   {
-    "name": "Output dir",
+    "name": "Output Directory",
     "argName": "--output_dir_path",
     "type": "string",
     "required": true,
     "ui_element": "filePicker",
-    "description": "Diretório onde a saída gerada pelo modelo será salva",
+    "description": "Directory where the model's output will be saved",
     "default_value": ""
   },
   {
-    "name": "Temperatura",
+    "name": "Temperature",
     "argName": "--temperature",
     "type": "float",
     "required": true,
     "ui_element": "spinner",
-    "description": "Define a temperatura do modelo, afetando a aleatoriedade da resposta",
+    "description": "Sets the model's temperature, affecting the randomness of the response",
     "allowed_values": {
       "min": 0.0,
       "max": 1.0
@@ -46,16 +46,16 @@
     "type": "boolean",
     "required": false,
     "ui_element": "checkbox",
-    "description": "Ativa logs detalhados durante a execução",
+    "description": "Enables detailed logs during execution",
     "default_value": false
   },
   {
-    "name": "Modelo",
+    "name": "Model",
     "argName": "--model",
     "type": "string",
     "required": true,
     "ui_element": "combobox",
-    "description": "Modelo do DeepSeek a ser utilizado",
+    "description": "DeepSeek model to be used",
     "allowed_values": ["deepseek-chat", "deepseek-coder"],
     "default_value": "deepseek-chat"
   }

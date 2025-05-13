@@ -18,10 +18,10 @@ class ChangeConfigsAction : AnAction() {
         val dialog = object : DialogWrapper(project) {
             private val configurationPanel = LLMConfigurationPanel()
             private val llmSettings = LLMSettings.getInstance()
-            private val deleteButton = JButton("Excluir Configuração")
+            private val deleteButton = JButton("Delete Configuration")
 
             init {
-                title = "Configurações de LLM"
+                title = "LLM Settings"
                 init()
             }
 
@@ -45,7 +45,7 @@ class ChangeConfigsAction : AnAction() {
                 val existingConfig = llmSettings.getConfigurationByName(selectedConfigName)
 
                 if (existingConfig == null) {
-                    JOptionPane.showMessageDialog(null, "Configuração não encontrada!", "Erro", JOptionPane.ERROR_MESSAGE)
+                    JOptionPane.showMessageDialog(null, "Configuration not found!", "Error", JOptionPane.ERROR_MESSAGE)
                     return
                 }
 
@@ -63,7 +63,7 @@ class ChangeConfigsAction : AnAction() {
                         component is JBTextField -> {
                             val textValue = component.text.trim()
                             if (required && textValue.isEmpty()) {
-                                showError("O campo '$key' é obrigatório e não pode estar vazio.")
+                                showError("The field '$key' is required and cannot be empty.")
                                 return
                             }
                             LLMSettings.StringParam(key, argName, required, description, textValue)
@@ -74,7 +74,7 @@ class ChangeConfigsAction : AnAction() {
                         component is ComboBox<*> -> {
                             val selectedValue = component.selectedItem?.toString() ?: ""
                             if (required && selectedValue.isEmpty()) {
-                                showError("O campo '$key' é obrigatório e deve ter um valor selecionado.")
+                                showError("The field '$key' is required and must have a selected value.")
                                 return
                             }
                             val allowedValues = (paramSpec["allowed_values"] as? List<*>)?.map { it.toString() } ?: emptyList()
@@ -93,7 +93,7 @@ class ChangeConfigsAction : AnAction() {
                 val commandField = configurationPanel.parameterFieldMap["Comando para o Console:"] as? JBTextField
                 val updatedCommand = commandField?.text?.trim() ?: existingConfig.command
                 if (updatedCommand.isEmpty()) {
-                    showError("O campo 'Comando para o Console' é obrigatório e não pode estar vazio.")
+                    showError("The field 'Command for the Console' is required and cannot be empty.")
                     return
                 }
 
@@ -126,8 +126,8 @@ class ChangeConfigsAction : AnAction() {
                 if (existingConfig != null) {
                     val confirmation = JOptionPane.showConfirmDialog(
                         null,
-                        "Tem certeza de que deseja excluir a configuração '$selectedConfigName'?",
-                        "Confirmação",
+                        "Are you sure you want to delete the configuration '$selectedConfigName'?",
+                        "Confirmation",
                         JOptionPane.YES_NO_OPTION
                     )
 
@@ -135,15 +135,15 @@ class ChangeConfigsAction : AnAction() {
                         llmSettings.removeConfiguration(existingConfig)
                         configurationPanel.configurationComboBox.removeItem(selectedConfigName)
 
-                        JOptionPane.showMessageDialog(null, "Configuração '$selectedConfigName' excluída com sucesso!")
+                        JOptionPane.showMessageDialog(null, "Configuration '$selectedConfigName' deleted successfully!")
                     }
                 } else {
-                    JOptionPane.showMessageDialog(null, "Configuração não encontrada!", "Erro", JOptionPane.ERROR_MESSAGE)
+                    JOptionPane.showMessageDialog(null, "Configuration not found!", "Error", JOptionPane.ERROR_MESSAGE)
                 }
             }
 
             private fun showError(message: String) {
-                JOptionPane.showMessageDialog(null, message, "Erro", JOptionPane.ERROR_MESSAGE)
+                JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE)
             }
         }
         dialog.show()

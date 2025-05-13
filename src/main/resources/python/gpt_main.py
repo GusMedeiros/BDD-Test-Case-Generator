@@ -24,7 +24,7 @@ class BddAgent:
 
     def add_message_from_file(self, role, file_path):
         self.add_message(role, Utils.file_to_string(file_path))
-        print(f"prompt: \n {Utils.file_to_string(file_path)}")
+        print(f"Prompt: \n {Utils.file_to_string(file_path)}")
 
     def run(self, model="gpt-3.5-turbo-1106", save_response_to_message=True, temperature=None, seed=None):
         run_executed = False
@@ -70,7 +70,7 @@ class Utils:
 class Main:
     @staticmethod
     def add_initial_messages(agent: BddAgent, instruction_prompt_path: str, user_story_path: str):
-        agent.add_message(role="user", content= Utils.file_to_string(instruction_prompt_path))
+        agent.add_message(role="user", content=Utils.file_to_string(instruction_prompt_path))
         agent.add_message_from_file(role="user", file_path=user_story_path)
 
     @staticmethod
@@ -98,9 +98,9 @@ class Main:
             if debug:
                 for c, message in enumerate(agent.messages):
                     content = message["content"]
-                    caminho_output = os.path.join(output_dir_path, f'msg{c}.txt')
-                    with open(caminho_output, 'w', encoding="utf-8") as arquivo:
-                        arquivo.write(content)
+                    output_path = os.path.join(output_dir_path, f'msg{c}.txt')
+                    with open(output_path, 'w', encoding="utf-8") as file:
+                        file.write(content)
             return result
 
 
@@ -130,7 +130,7 @@ if __name__ == "__main__":
             output_dir_path=args.output_dir_path,
             times_to_run=1,
             temperature=args.temperature,
-            seed=args.seed,  # Seed agora é opcional
+            seed=args.seed,
             model=args.model,
             debug=args.debug
         )

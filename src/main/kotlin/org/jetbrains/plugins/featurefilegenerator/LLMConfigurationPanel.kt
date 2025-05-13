@@ -18,7 +18,7 @@ class LLMConfigurationPanel : JPanel(BorderLayout()) {
     private val llmSettings = LLMSettings.getInstance()
     val configurationComboBox = ComboBox<String>()
     private val dynamicPanel = JPanel(GridBagLayout())
-    private val addNewLabel = "Inserir novo"
+    private val addNewLabel = "Insert new"
     val parameterFieldMap = mutableMapOf<String, JComponent>()
 
     init {
@@ -38,7 +38,7 @@ class LLMConfigurationPanel : JPanel(BorderLayout()) {
 
         configurationComboBox.addActionListener {
             val selected = configurationComboBox.selectedItem as? String
-            llmSettings.setSelectedLLM(selected) // Salvar a seleção ao mudar
+            llmSettings.setSelectedLLM(selected) // Save selection on change
             onConfigurationSelected()
         }
 
@@ -49,7 +49,7 @@ class LLMConfigurationPanel : JPanel(BorderLayout()) {
                 anchor = GridBagConstraints.WEST
                 insets = Insets(5, 5, 5, 5)
             }
-            add(JBLabel("Selecione ou insira uma nova LLM:"), gbc)
+            add(JBLabel("Select or insert a new LLM:"), gbc)
 
             gbc.gridx = 1
             gbc.fill = GridBagConstraints.HORIZONTAL
@@ -83,7 +83,7 @@ class LLMConfigurationPanel : JPanel(BorderLayout()) {
         parameterFieldMap.clear()
 
         if (existingConfig == null) {
-            dynamicPanel.add(JBLabel("Configuração não encontrada."), GridBagConstraints())
+            dynamicPanel.add(JBLabel("Configuration not found."), GridBagConstraints())
             return
         }
 
@@ -108,35 +108,35 @@ class LLMConfigurationPanel : JPanel(BorderLayout()) {
         }
 
         val nameField = JBTextField(existingConfig.name)
-        addRow("Nome da LLM:", nameField)
+        addRow("LLM Name:", nameField)
 
         val scriptField = JBTextField(existingConfig.scriptFilePath)
-        val scriptButton = JButton("Procurar").apply {
+        val scriptButton = JButton("Browse").apply {
             addActionListener {
                 val fileChooser = JFileChooser()
-                fileChooser.fileFilter = FileNameExtensionFilter("Arquivos de Script", "sh", "bat", "py")
+                fileChooser.fileFilter = FileNameExtensionFilter("Script Files", "sh", "bat", "py")
                 if (fileChooser.showOpenDialog(this@LLMConfigurationPanel) == JFileChooser.APPROVE_OPTION) {
                     scriptField.text = fileChooser.selectedFile.absolutePath
                 }
             }
         }
-        addRow("Selecionar Arquivo de Script:", createHorizontalPanel(scriptField, scriptButton))
+        addRow("Select Script File:", createHorizontalPanel(scriptField, scriptButton))
 
         val configField = JBTextField(existingConfig.parameterSpecFilePath)
-        val configButton = JButton("Procurar").apply {
+        val configButton = JButton("Browse").apply {
             addActionListener {
                 val fileChooser = JFileChooser()
-                fileChooser.fileFilter = FileNameExtensionFilter("Arquivos de Configuração", "json", "yaml", "xml")
+                fileChooser.fileFilter = FileNameExtensionFilter("Configuration Files", "json", "yaml", "xml")
                 if (fileChooser.showOpenDialog(this@LLMConfigurationPanel) == JFileChooser.APPROVE_OPTION) {
                     configField.text = fileChooser.selectedFile.absolutePath
                     renderExistingConfigurationFields(existingConfig)
                 }
             }
         }
-        addRow("Selecionar Arquivo de Configuração:", createHorizontalPanel(configField, configButton))
+        addRow("Select Configuration File:", createHorizontalPanel(configField, configButton))
 
         val commandField = JBTextField(existingConfig.command)
-        addRow("Comando para o Console:", commandField)
+        addRow("Console Command:", commandField)
 
         val configPath = existingConfig.parameterSpecFilePath
         if (configPath.isNotBlank() && File(configPath).exists()) {
@@ -152,7 +152,7 @@ class LLMConfigurationPanel : JPanel(BorderLayout()) {
                 addRow(paramName, component)
             }
         } else {
-            dynamicPanel.add(JBLabel("Arquivo de configuração inválido ou inexistente."), GridBagConstraints())
+            dynamicPanel.add(JBLabel("Invalid or non-existent configuration file."), GridBagConstraints())
         }
 
         dynamicPanel.revalidate()
@@ -230,35 +230,35 @@ class LLMConfigurationPanel : JPanel(BorderLayout()) {
         }
 
         val nameField = JBTextField()
-        addRow("Nome da LLM:", nameField)
+        addRow("LLM Name:", nameField)
 
         val scriptField = JBTextField()
-        val scriptButton = JButton("Procurar").apply {
+        val scriptButton = JButton("Browse").apply {
             addActionListener {
                 val fileChooser = JFileChooser()
-                fileChooser.fileFilter = FileNameExtensionFilter("Arquivos de Script", "sh", "bat", "py")
+                fileChooser.fileFilter = FileNameExtensionFilter("Script Files", "sh", "bat", "py")
                 if (fileChooser.showOpenDialog(this@LLMConfigurationPanel) == JFileChooser.APPROVE_OPTION) {
                     scriptField.text = fileChooser.selectedFile.absolutePath
                 }
             }
         }
-        addRow("Selecionar Arquivo de Script:", createHorizontalPanel(scriptField, scriptButton))
+        addRow("Select Script File:", createHorizontalPanel(scriptField, scriptButton))
 
         val configField = JBTextField()
-        val configButton = JButton("Procurar").apply {
+        val configButton = JButton("Browse").apply {
             addActionListener {
                 val fileChooser = JFileChooser()
-                fileChooser.fileFilter = FileNameExtensionFilter("Arquivos de Configuração", "json", "yaml", "xml")
+                fileChooser.fileFilter = FileNameExtensionFilter("Configuration Files", "json", "yaml", "xml")
                 if (fileChooser.showOpenDialog(this@LLMConfigurationPanel) == JFileChooser.APPROVE_OPTION) {
                     configField.text = fileChooser.selectedFile.absolutePath
                     renderNewConfigurationFields()
                 }
             }
         }
-        addRow("Selecionar Arquivo de Configuração:", createHorizontalPanel(configField, configButton))
+        addRow("Select Configuration File:", createHorizontalPanel(configField, configButton))
 
         val commandField = JBTextField()
-        addRow("Comando para o Console:", commandField)
+        addRow("Console Command:", commandField)
 
         if (configField.text.isNotBlank() && File(configField.text).exists()) {
             val specifications = loadParameterSpecifications(configField.text)
@@ -270,7 +270,7 @@ class LLMConfigurationPanel : JPanel(BorderLayout()) {
         }
 
         gbc.gridwidth = 2
-        val saveButton = JButton("Salvar").apply {
+        val saveButton = JButton("Save").apply {
             addActionListener {
                 saveNewConfiguration(
                     nameField.text,
@@ -288,41 +288,40 @@ class LLMConfigurationPanel : JPanel(BorderLayout()) {
 
     private fun saveNewConfiguration(name: String, scriptPath: String, configPath: String, command: String) {
         if (name.isBlank() || scriptPath.isBlank() || configPath.isBlank() || command.isBlank()) {
-            JOptionPane.showMessageDialog(this, "Todos os campos devem ser preenchidos!", "Erro", JOptionPane.ERROR_MESSAGE)
+            JOptionPane.showMessageDialog(this, "All fields must be filled out!", "Error", JOptionPane.ERROR_MESSAGE)
             return
         }
         if (!File(scriptPath).exists() || !File(configPath).exists()) {
-            JOptionPane.showMessageDialog(this, "Os arquivos selecionados não existem!", "Erro", JOptionPane.ERROR_MESSAGE)
+            JOptionPane.showMessageDialog(this, "Selected files do not exist!", "Error", JOptionPane.ERROR_MESSAGE)
             return
         }
 
-        // Verifica se já existe uma configuração com o mesmo nome
+        // Check if a configuration with the same name already exists
         val existingConfig = llmSettings.getConfigurationByName(name)
         if (existingConfig != null) {
-            JOptionPane.showMessageDialog(this, "Já existe uma configuração com esse nome!", "Erro", JOptionPane.ERROR_MESSAGE)
+            JOptionPane.showMessageDialog(this, "A configuration with this name already exists!", "Error", JOptionPane.ERROR_MESSAGE)
             return
         }
 
-        // Criar nova configuração
+        // Create new configuration
         val newConfiguration = LLMSettings.LLMConfiguration(
             name = name,
             scriptFilePath = scriptPath,
             parameterSpecFilePath = configPath,
-            command = command // Adicionando o campo command aqui
+            command = command // Adding the command field here
         )
 
-
         try {
-            // Adiciona a nova configuração sem remover as antigas
+            // Add the new configuration without removing existing ones
             llmSettings.addConfiguration(newConfiguration)
 
-            // Atualiza apenas a parte do ComboBox
+            // Only update the ComboBox portion
             val updatedConfigurations = llmSettings.getConfigurations().map { it.name } + addNewLabel
             configurationComboBox.model = DefaultComboBoxModel(updatedConfigurations.toTypedArray())
 
-            JOptionPane.showMessageDialog(this, "Nova configuração adicionada com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE)
+            JOptionPane.showMessageDialog(this, "New configuration added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE)
         } catch (e: Exception) {
-            JOptionPane.showMessageDialog(this, "Erro ao salvar configuração: ${e.message}", "Erro", JOptionPane.ERROR_MESSAGE)
+            JOptionPane.showMessageDialog(this, "Error saving configuration: ${e.message}", "Error", JOptionPane.ERROR_MESSAGE)
         }
     }
 
