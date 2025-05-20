@@ -115,7 +115,7 @@ if __name__ == "__main__":
     parser.add_argument('--temperature', type=float, required=True, help='Temperature for the model')
     parser.add_argument('--seed', type=int, default=None, nargs='?', help='Seed for reproducibility (optional)')
     parser.add_argument('--debug', action='store_true', help='Whether to run the script in debug mode')
-    parser.add_argument('--model', type=str, required=True, choices=["gpt-3.5-turbo", "gpt-4", "gpt-4-32k"],
+    parser.add_argument('--model', type=str, required=True,
                         help='The model to use for generating completions')
 
     args = parser.parse_args()
