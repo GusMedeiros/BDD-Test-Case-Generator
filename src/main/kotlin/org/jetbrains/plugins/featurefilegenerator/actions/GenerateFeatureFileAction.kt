@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.plugins.featurefilegenerator.LLMSettings
+import org.jetbrains.plugins.featurefilegenerator.executor.LLMExecutor
 import java.io.File
 
 class GenerateFeatureFileAction : AnAction() {
@@ -33,17 +34,17 @@ class GenerateFeatureFileAction : AnAction() {
             override fun run(indicator: ProgressIndicator) {
                 indicator.text = "Running the LLM script..."
                 indicator.isIndeterminate = true // Indicates unknown duration
+                val executor = LLMExecutor(settings)
 
-                val result = runProcess(config, filePath)
-
-                // Display the result to the user
-                ApplicationManager.getApplication().invokeLater {
-                    Messages.showMessageDialog(
-                        project,
-                        result,
-                        "Execution Result",
-                        Messages.getInformationIcon()
-                    )
+                executor.execute(selectedLLM, filePath) { llmName, result ->
+                    ApplicationManager.getApplication().invokeLater {
+                        Messages.showMessageDialog(
+                            project,
+                            result,
+                            "Execution Result - $llmName",
+                            Messages.getInformationIcon()
+                        )
+                    }
                 }
             }
         })
@@ -65,55 +66,6 @@ class GenerateFeatureFileAction : AnAction() {
         if (config == null) {
             Messages.showErrorDialog("Configuration '$selectedLLM' not found.", "Configuration Error")
             return
-        }
-    }
-
-    private fun runProcess(config: LLMSettings.LLMConfiguration, filePath: String): String {
-        return try {
-            val commandList = mutableListOf<String>().apply {
-                add(config.command) // Example: "python"
-                add(config.scriptFilePath) // Example: "gpt_main.py" or "gemini_main.py"
-
-                val paramMap = config.namedParameters.associateBy { it.argName }
-
-                // Add all parameters defined in the configuration, ensuring argName usage
-                config.namedParameters.forEach { param ->
-                    if (param.argName.isNotBlank()) { // Avoid unnamed arguments
-                        if (param is LLMSettings.BooleanParam) {
-                            // For booleans, only add the flag if it is "true"
-                            if (param.value) add(param.argName)
-                        } else {
-                            add(param.argName)
-                            val value = when (param) {
-                                is LLMSettings.StringParam -> param.value
-                                is LLMSettings.IntParam -> param.value.toString()
-                                is LLMSettings.DoubleParam -> param.value.toString()
-                                is LLMSettings.ListParam -> param.value
-                                else -> ""
-                            }
-                            if (value.isNotBlank()) add(value) // Add the value only if valid
-                        }
-                    }
-                }
-
-                // Dynamically add the user story file path
-                add("--user_story_path")
-                add(filePath)
-            }
-
-            // Get output directory, if it exists
-            val outputDir = config.namedParameters.find { it.argName == "--output_dir_path" }
-                ?.let { (it as? LLMSettings.StringParam)?.value } ?: "."
-
-            // Execute the process
-            val process = ProcessBuilder(commandList)
-                .directory(File(outputDir))
-                .redirectErrorStream(true)
-                .start()
-
-            process.inputStream.bufferedReader().use { it.readText() }
-        } catch (e: Exception) {
-            "Error executing the process: ${e.message}"
         }
     }
 }
