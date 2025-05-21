@@ -13,18 +13,11 @@ class BddAgent:
         self.last_run = None
         self.last_response = None
 
-    def add_message(self, role, content):
-        self.messages.insert(0, {"role": role, "content": content})
-
     def append_message(self, role, content):
         self.messages.append({"role": role, "content": content})
 
     def append_message_from_file(self, role, file_path):
         self.append_message(role, Utils.file_to_string(file_path))
-
-    def add_message_from_file(self, role, file_path):
-        self.add_message(role, Utils.file_to_string(file_path))
-        print(f"Prompt: \n {Utils.file_to_string(file_path)}")
 
     def run(self, model="gpt-3.5-turbo-1106", save_response_to_message=True, temperature=None, seed=None):
         run_executed = False
@@ -44,7 +37,7 @@ class BddAgent:
                 time.sleep(30)
         self.last_response = self.last_run.choices[0].message
         if save_response_to_message:
-            self.add_message(self.last_response.role, self.last_response.content)
+            self.append_message(self.last_response.role, self.last_response.content)
 
 
 class Utils:
@@ -70,8 +63,8 @@ class Utils:
 class Main:
     @staticmethod
     def add_initial_messages(agent: BddAgent, instruction_prompt_path: str, user_story_path: str):
-        agent.add_message(role="user", content=Utils.file_to_string(instruction_prompt_path))
-        agent.add_message_from_file(role="user", file_path=user_story_path)
+        agent.append_message(role="user", content=Utils.file_to_string(instruction_prompt_path))
+        agent.append_message_from_file(role="user", file_path=user_story_path)
 
     @staticmethod
     def run_like_chat(agent: BddAgent, model: str, prompt_instruction_path: str, user_story_path: str, temperature=None, seed=None):
