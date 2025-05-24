@@ -55,9 +55,9 @@ Before using the plugin, you need to configure your desired LLM profile:
 1.  **Access Settings:**
     In the IntelliJ IDEA menu, go to `Tools` -> `Change BDDTestGen Settings`.
 
-2.  **Enter Your Credentials:**
+2.  **Enter Your Settings and Credentials:**
     A dialog box will appear. Select the LLM you wish to use from the available profiles. The required fields will vary depending on the selected LLM. Fill in the necessary information (e.g., API keys, model names).
-
+    Pay special attention to the Console Command field. For windows it's usually "python", for linux it's usually python3.
 3.  **Save and Select:**
     Click "OK" to save your settings. The selected LLM profile is now active and future runs will use it.
 

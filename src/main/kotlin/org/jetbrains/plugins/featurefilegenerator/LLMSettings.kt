@@ -14,7 +14,6 @@ import java.io.File
     storages = [Storage("LLMSettings.xml")]
 )
 class LLMSettings : PersistentStateComponent<LLMSettings.State> {
-
     private var myState: State = State()
 
     class State {
@@ -23,6 +22,10 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
 
         @Attribute("selectedLLMName")
         var selectedLLMName: String? = null
+    }
+    override fun noStateLoaded() {
+        println("DEBUG: No state loaded, adding default configurations.")
+        addDefaultConfigurationsIfMissing()
     }
 
     fun getSelectedLLM(): String? = myState.selectedLLMName
@@ -129,6 +132,8 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         fun getInstance(): LLMSettings {
             return ApplicationManager.getApplication().getService(LLMSettings::class.java)
         }
+
+        // The problematic 'init' block has been removed from here.
     }
 
     override fun getState(): State = myState
@@ -136,11 +141,6 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
     override fun loadState(state: State) {
         myState = state
         println("DEBUG: Loading LLMSettings state")
-
-        if (myState.configurations.isEmpty()) {
-            println("DEBUG: No configurations found on init. Adding defaults...")
-            addDefaultConfigurationsIfMissing()
-        }
 
         myState.configurations.forEach { config ->
             println("DEBUG: Loaded configuration -> ${config.name}")
@@ -176,6 +176,8 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
 
             println("DEBUG: Fixed parameters -> ${config.namedParameters}")
         }
+
+        addDefaultConfigurationsIfMissing()
     }
 
 
@@ -286,7 +288,14 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         val fixedParameters = mutableListOf<NamedParameter>()
 
         parameters.forEach { param ->
-            fixedParameters.add(param)
+            when (param) {
+                is NamedParameter -> {
+                    fixedParameters.add(param)
+                }
+                else -> {
+                    println("DEBUG: ⚠ Unexpected type found in namedParameters: ${param?.javaClass?.name}")
+                }
+            }
         }
 
         return fixedParameters
