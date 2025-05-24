@@ -16,7 +16,7 @@ class ChangeConfigsAction : AnAction() {
         val project = event.project ?: return
 
         val dialog = object : DialogWrapper(project) {
-            private val configurationPanel = LLMConfigurationPanel()
+            private val configurationPanel = LLMConfigurationPanel(project)
             private val llmSettings = LLMSettings.getInstance()
             private val deleteButton = JButton("Delete Configuration")
 
@@ -90,13 +90,31 @@ class ChangeConfigsAction : AnAction() {
                     param?.let { updatedParams.add(it) }
                 }
 
-                val commandField = configurationPanel.parameterFieldMap["Comando para o Console:"] as? JBTextField
+                // ✅ Extract script file, config file, and command
+                val scriptField = configurationPanel.parameterFieldMap["Select Script File:"] as? JBTextField
+                val configField = configurationPanel.parameterFieldMap["Select Configuration File:"] as? JBTextField
+                val commandField = configurationPanel.parameterFieldMap["Console Command:"] as? JBTextField
+
+                val updatedScriptPath = scriptField?.text?.trim() ?: existingConfig.scriptFilePath
+                val updatedConfigPath = configField?.text?.trim() ?: existingConfig.parameterSpecFilePath
                 val updatedCommand = commandField?.text?.trim() ?: existingConfig.command
-                if (updatedCommand.isEmpty()) {
-                    showError("The field 'Command for the Console' is required and cannot be empty.")
+
+                if (updatedScriptPath.isEmpty()) {
+                    showError("The field 'Select Script File' is required and cannot be empty.")
                     return
                 }
 
+                if (updatedConfigPath.isEmpty()) {
+                    showError("The field 'Select Configuration File' is required and cannot be empty.")
+                    return
+                }
+
+                if (updatedCommand.isEmpty()) {
+                    showError("The field 'Console Command' is required and cannot be empty.")
+                    return
+                }
+
+                // ✅ Preserve unchecked booleans
                 val existingBooleanParams = existingConfig.namedParameters.filterIsInstance<LLMSettings.BooleanParam>()
                 for (param in existingBooleanParams) {
                     if (updatedParams.none { it.key == param.key }) {
@@ -106,18 +124,21 @@ class ChangeConfigsAction : AnAction() {
                     }
                 }
 
+                // ✅ Build and save updated config
                 val updatedConfig = LLMSettings.LLMConfiguration(
                     name = existingConfig.name,
-                    scriptFilePath = existingConfig.scriptFilePath,
-                    parameterSpecFilePath = existingConfig.parameterSpecFilePath,
+                    scriptFilePath = updatedScriptPath,
+                    parameterSpecFilePath = updatedConfigPath,
                     command = updatedCommand,
                     namedParameters = updatedParams
                 )
 
                 llmSettings.updateConfiguration(existingConfig, updatedConfig)
                 llmSettings.setSelectedLLM(selectedConfigName)
+
                 super.doOKAction()
             }
+
 
             private fun deleteSelectedConfiguration() {
                 val selectedConfigName = configurationPanel.configurationComboBox.selectedItem as? String ?: return

@@ -2,6 +2,7 @@ package org.jetbrains.plugins.featurefilegenerator
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
@@ -13,7 +14,7 @@ import java.io.File
 import javax.swing.*
 import javax.swing.filechooser.FileNameExtensionFilter
 
-class LLMConfigurationPanel : JPanel(BorderLayout()) {
+class LLMConfigurationPanel(private val project: Project?) : JPanel(BorderLayout()) {
 
     private val llmSettings = LLMSettings.getInstance()
     val configurationComboBox = ComboBox<String>()
@@ -159,23 +160,41 @@ class LLMConfigurationPanel : JPanel(BorderLayout()) {
         dynamicPanel.repaint()
     }
 
-    private fun createUIComponentForParameter(spec: Map<String, Any>, existingValue: LLMSettings.NamedParameter?): JComponent {
+    private fun createUIComponentForParameter(
+        spec: Map<String, Any>,
+        existingValue: LLMSettings.NamedParameter?
+    ): JComponent {
+        val paramName = spec["name"]?.toString() ?: "Unnamed"
+
+        val isInstructionPrompt = paramName == "Instruction Prompt Path"
+        val isOutputDirectory = paramName == "Output Directory"
+
+        val dynamicDefault = when {
+            isInstructionPrompt -> getRuntimeInstructionFilePath()
+            isOutputDirectory -> project?.basePath ?: System.getProperty("user.home")
+            else -> null
+        }
+
         val defaultValue = existingValue?.let {
             when (it) {
                 is LLMSettings.StringParam -> it.value
                 is LLMSettings.BooleanParam -> it.value.toString()
                 is LLMSettings.ListParam -> it.value
                 is LLMSettings.DoubleParam -> it.value.toString()
-                else -> spec["default_value"]?.toString()
+                else -> spec["default_value"]?.toString() ?: dynamicDefault
             }
-        } ?: spec["default_value"]?.toString()
+        } ?: dynamicDefault ?: spec["default_value"]?.toString()
 
         return when (spec["ui_element"]?.toString()) {
-            "textfield" -> JBTextField(defaultValue ?: "")
-            "checkbox" -> JCheckBox(spec["name"].toString()).apply { isSelected = defaultValue?.toBoolean() ?: false }
+            "textfield", "filePicker" -> JBTextField(defaultValue ?: "")
+            "checkbox" -> JCheckBox(paramName).apply {
+                isSelected = defaultValue?.toBoolean() ?: false
+            }
             "combobox" -> {
                 val allowedValues = (spec["allowed_values"] as? List<*>)?.map { it.toString() } ?: emptyList()
-                ComboBox(allowedValues.toTypedArray()).apply { selectedItem = defaultValue }
+                ComboBox(allowedValues.toTypedArray()).apply {
+                    selectedItem = defaultValue
+                }
             }
             "spinner" -> {
                 val allowedValues = spec["allowed_values"] as? Map<*, *>
@@ -188,6 +207,27 @@ class LLMConfigurationPanel : JPanel(BorderLayout()) {
             else -> JBTextField(defaultValue ?: "")
         }
     }
+
+
+
+    private fun getRuntimeInstructionFilePath(): String {
+        val resourcePath = "python/message_1_response=user.txt"
+        val inputStream = javaClass.classLoader.getResourceAsStream(resourcePath)
+            ?: throw IllegalArgumentException("Resource not found: $resourcePath")
+
+        val tempFile = File.createTempFile("message_1_response_user", ".txt")
+        tempFile.deleteOnExit()
+
+        inputStream.use { input ->
+            tempFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+
+        println("DEBUG: Instruction file copied to ${tempFile.absolutePath}")
+        return tempFile.absolutePath
+    }
+
 
     fun loadParameterSpecifications(path: String): List<Map<String, Any>> {
         val file = File(path)

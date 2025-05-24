@@ -25,9 +25,7 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         var selectedLLMName: String? = null  // Stores the selected LLM
     }
 
-    fun getSelectedLLM(): String? {
-        return myState.selectedLLMName
-    }
+    fun getSelectedLLM(): String? = myState.selectedLLMName
 
     fun setSelectedLLM(name: String?) {
         myState.selectedLLMName = name
@@ -64,7 +62,7 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         @Attribute("key")
         open var key: String = "",
 
-        @Attribute("argName") // New standardized field for CLI argument name
+        @Attribute("argName")
         open var argName: String = "",
 
         @Attribute("required")
@@ -131,11 +129,17 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         fun getInstance(): LLMSettings {
             return ApplicationManager.getApplication().getService(LLMSettings::class.java)
         }
+
+        init {
+            val settings = getInstance()
+            if (settings.getConfigurations().isEmpty()) {
+                println("DEBUG: No configurations found on init. Adding defaults...")
+                settings.addDefaultConfigurationsIfMissing()
+            }
+        }
     }
 
-    override fun getState(): State {
-        return myState
-    }
+    override fun getState(): State = myState
 
     override fun loadState(state: State) {
         myState = state
@@ -145,6 +149,74 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
             config.namedParameters = ensureNamedParameters(config.namedParameters)
             println("DEBUG: Fixed parameters -> ${config.namedParameters}")
         }
+        addDefaultConfigurationsIfMissing()
+    }
+
+    private fun getDefaultInstructionFilePath(): String {
+        return copyResourceToTempFile("python/message_1_response=user.txt", ".txt")
+    }
+
+
+
+    fun addDefaultConfigurationsIfMissing() {
+        val configs = listOf(
+            Triple("ChatGPT", "gpt_main.py", "gpt_specifications.json"),
+            Triple("Gemini", "gemini_main.py", "gemini_specifications.json"),
+            Triple("DeepSeek", "deepseek_main.py", "deepseek_specifications.json")
+        )
+
+        val instructionFilePath = getDefaultInstructionFilePath()
+
+        println("DEBUG: Current configs before adding defaults: ${myState.configurations.map { it.name }}")
+
+        configs.forEach { (name, scriptFile, specFile) ->
+            if (myState.configurations.none { it.name == name }) {
+                val scriptPath = copyResourceToTempFile("python/$scriptFile", ".py")
+                val specPath = copyResourceToTempFile("python/$specFile", ".json")
+
+                val config = LLMConfiguration(
+                    name = name,
+                    scriptFilePath = scriptPath,
+                    parameterSpecFilePath = specPath,
+                    command = "python3",
+                    namedParameters = mutableListOf(
+                        StringParam(
+                            key = "Instruction Prompt Path",
+                            argName = "--instruction_file",
+                            required = true,
+                            description = "Path to the instruction prompt file",
+                            value = instructionFilePath
+                        )
+                    )
+                )
+
+                println("DEBUG: Adding default config -> $name")
+                myState.configurations.add(config)
+            }
+        }
+    }
+
+
+
+
+    private fun copyResourceToTempFile(resourcePath: String, suffix: String = ""): String {
+        val inputStream = javaClass.classLoader.getResourceAsStream(resourcePath)
+            ?: throw IllegalArgumentException("Resource not found: $resourcePath")
+
+        val tempFile = File.createTempFile(
+            resourcePath.substringAfterLast("/").substringBeforeLast("."),
+            suffix.ifEmpty { ".tmp" }
+        )
+        tempFile.deleteOnExit()
+
+        inputStream.use { input ->
+            tempFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+
+        println("DEBUG: Copied resource $resourcePath to temp file ${tempFile.absolutePath}")
+        return tempFile.absolutePath
     }
 
     fun addConfiguration(config: LLMConfiguration) {
@@ -152,11 +224,10 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
             throw IllegalArgumentException("Invalid file path(s) provided.")
         }
 
-        // Check if a configuration with the same name already exists
         val existingConfig = myState.configurations.find { it.name == config.name }
 
         if (existingConfig == null) {
-            myState.configurations.add(config) // Add new config without removing old ones
+            myState.configurations.add(config)
         } else {
             throw IllegalArgumentException("Configuration with the same name already exists.")
         }
@@ -166,9 +237,7 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         myState.configurations.remove(config)
     }
 
-    fun getConfigurations(): List<LLMConfiguration> {
-        return myState.configurations
-    }
+    fun getConfigurations(): List<LLMConfiguration> = myState.configurations
 
     fun updateConfiguration(oldConfig: LLMConfiguration, newConfig: LLMConfiguration) {
         val index = myState.configurations.indexOf(oldConfig)
@@ -210,7 +279,5 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         return fixedParameters
     }
 
-    private fun isValidFilePath(path: String): Boolean {
-        return File(path).exists()
-    }
+    private fun isValidFilePath(path: String): Boolean = File(path).exists()
 }
