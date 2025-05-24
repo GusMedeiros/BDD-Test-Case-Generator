@@ -22,7 +22,7 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         var configurations: MutableList<LLMConfiguration> = mutableListOf()
 
         @Attribute("selectedLLMName")
-        var selectedLLMName: String? = null  // Stores the selected LLM
+        var selectedLLMName: String? = null
     }
 
     fun getSelectedLLM(): String? = myState.selectedLLMName
@@ -144,18 +144,44 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
     override fun loadState(state: State) {
         myState = state
         println("DEBUG: Loading LLMSettings state")
+
         myState.configurations.forEach { config ->
             println("DEBUG: Loaded configuration -> ${config.name}")
+
+            val (scriptResource, specResource) = when (config.name.lowercase()) {
+                "chatgpt" -> "python/gpt_main.py" to "python/gpt_specifications.json"
+                "gemini" -> "python/gemini_main.py" to "python/gemini_specifications.json"
+                "deepseek" -> "python/deepseek_main.py" to "python/deepseek_specifications.json"
+                else -> null to null
+            }
+
+            if (scriptResource != null && !File(config.scriptFilePath).exists()) {
+                config.scriptFilePath = copyResourceToTempFile(scriptResource, ".py")
+            }
+
+            if (specResource != null && !File(config.parameterSpecFilePath).exists()) {
+                config.parameterSpecFilePath = copyResourceToTempFile(specResource, ".json")
+            }
+
             config.namedParameters = ensureNamedParameters(config.namedParameters)
+
+            config.namedParameters.forEach { param ->
+                if (param is StringParam && param.key == "Instruction Prompt Path") {
+                    if (!File(param.value).exists()) {
+                        println("DEBUG: Instruction prompt file ${param.value} does not exist. Recreating...")
+                        param.value = copyResourceToTempFile(
+                            "python/message_1_response=user.txt",
+                            ".txt"
+                        )
+                    }
+                }
+            }
+
             println("DEBUG: Fixed parameters -> ${config.namedParameters}")
         }
+
         addDefaultConfigurationsIfMissing()
     }
-
-    private fun getDefaultInstructionFilePath(): String {
-        return copyResourceToTempFile("python/message_1_response=user.txt", ".txt")
-    }
-
 
 
     fun addDefaultConfigurationsIfMissing() {
@@ -166,8 +192,6 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         )
 
         val instructionFilePath = getDefaultInstructionFilePath()
-
-        println("DEBUG: Current configs before adding defaults: ${myState.configurations.map { it.name }}")
 
         configs.forEach { (name, scriptFile, specFile) ->
             if (myState.configurations.none { it.name == name }) {
@@ -196,8 +220,9 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         }
     }
 
-
-
+    private fun getDefaultInstructionFilePath(): String {
+        return copyResourceToTempFile("python/message_1_response=user.txt", ".txt")
+    }
 
     private fun copyResourceToTempFile(resourcePath: String, suffix: String = ""): String {
         val inputStream = javaClass.classLoader.getResourceAsStream(resourcePath)
