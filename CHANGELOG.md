@@ -4,6 +4,120 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add `platformBundledModules` to `gradle.properties` along with `bundledModules()` helper to the Gradle build file
+
+### Changed
+
+- Dependencies - upgrade `org.jetbrains.intellij.platform` to `2.7.1`
+
+### Fixed
+
+- GitHub: Fixed the missing `$RELEASE_NOTE ` parent directory in the Release workflow
+
+## [2.3.0] - 2025-08-09
+
+### Added
+
+- Added `.DS_Store` directory to `.gitignore`
+
+### Changed
+
+- GitHub Actions: simplify changelog handling
+- Dependencies - upgrade `org.jetbrains.changelog` to `2.4.0`
+
+## [2.2.0] - 2025-08-05
+
+### Added
+
+- GitHub Actions: set Gradle cache to read-only for non-build jobs
+- GitHub Actions: add `jlumbroso/free-disk-space` action to build related steps to maximize build environment storage
+- Added `.kotlin` directory to `.gitignore` for Kotlin 2.0
+
+### Removed
+
+- Remove `pluginUntilBuild` obsolete property
+- GitHub Actions: Remove obsolete Plugin Verifier cache directory configuration 
+
+### Changed
+
+- Upgrade Gradle Wrapper to `8.14.3`
+- Update `platformVersion` to `2024.3.6`
+- Dependencies - upgrade `org.jetbrains.intellij.platform` to `2.7.0`
+- Dependencies - upgrade `org.jetbrains.changelog` to `2.3.0`
+- Dependencies - upgrade `org.jetbrains.qodana` to `2025.1.1`
+- Dependencies - upgrade `org.jetbrains.kotlin.jvm` to `2.2.0`
+- Dependencies (GitHub Actions) - upgrade `JetBrains/qodana-action` to `v2025.1.1`
+- Dependencies (GitHub Actions) - upgrade `ad-m/github-push-action` to `v0.8.0`
+- Dependencies (GitHub Actions) - upgrade `jlumbroso/free-disk-space` to `v1.3.1`
+- Gradle - upgrade `org.gradle.toolchains.foojay-resolver-convention` to `1.0.0`
+- Change since build to `243` (2024.3)
+- Update codecov configuration based on new required upload token
+
+## [2.1.0] - 2025-03-28
+
+### Added
+
+- Example code – `ProjectActivity`
+- Added `opentest4j` test dependency, see: [Missing opentest4j dependency in Test Framework](https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-faq.html#missing-opentest4j-dependency-in-test-framework)
+
+### Removed
+
+- Example code – `MyApplicationActivationListener`
+- Remove redundant IntelliJ Platform dependency helpers: `instrumentationTools()`, `pluginVerifier()`, `zipSigner()`
+- GitHub Actions: Remove `gradle/actions/wrapper-validation` because validation is performed by default in `gradle/actions/setup-gradle@v4`
+
+### Changed
+
+- Change JVM version to `21`
+- Upgrade Gradle Wrapper to `8.13`
+- Update `platformVersion` to `2024.2.5`
+- Change since/until build to `242-252.*` (2024.2-2025.2.*)
+- Dependencies - upgrade `org.jetbrains.intellij.platform` to `2.5.0`
+- Dependencies - upgrade `org.jetbrains.kotlin.jvm` to `2.1.20`
+- Dependencies - upgrade `org.jetbrains.qodana` to `2024.3.4`
+- Dependencies - upgrade `org.jetbrains.kotlinx.kover` to `0.9.1`
+- Dependencies (GitHub Actions) - upgrade `gradle/actions/wrapper-validation` to `v4`
+- Dependencies (GitHub Actions) - upgrade `codecov/codecov-action` to `v5`
+
+## [2.0.2] - 2024-10-07
+
+### Changed
+
+- Upgrade Gradle Wrapper to `8.10.2`
+- Update `platformVersion` to `2023.3.8`
+- Dependencies - upgrade `org.jetbrains.intellij.platform` to `2.1.0`
+- Dependencies - upgrade `org.jetbrains.qodana` to `2024.2.3`
+- Dependencies (GitHub Actions) - upgrade `gradle/actions/setup-gradle` to `v4`
+- Add back the `org.gradle.toolchains.foojay-resolver-convention` Gradle settings plugin
+
+### Fixed
+
+- Fixed _Run Plugin_ run configuration logs location
+
+### Removed
+
+- Removed _Run Qodana_ and _Run UI for UI Tests_ run configurations
+
+## [2.0.1] - 2024-08-09
+
+### Changed
+
+- Update `platformVersion` to `2023.3.7`
+- Change since/until build to `233-242.*` (2023.3-2024.2.*)
+- Cleanup registering the `runIdeForUiTests` task
+- Dependencies - upgrade `org.jetbrains.intellij.platform` to `2.0.1`
+- Dependencies - upgrade `org.jetbrains.kotlin.jvm` to `1.9.25`
+- Dependencies - upgrade `org.jetbrains.kotlinx.kover` to `0.8.3`
+- Dependencies - upgrade `org.jetbrains.qodana` to `2024.1.9`
+
+## [2.0.0] - 2024-07-30
+
+### Changed
+
+- Migrate to [IntelliJ Platform Gradle Plugin 2.0](https://blog.jetbrains.com/platform/2024/07/intellij-platform-gradle-plugin-2-0/).
+
 ## [1.14.2] - 2024-07-12
 
 ### Changed
@@ -47,7 +161,7 @@
 
 - Dependencies - upgrade `org.jetbrains.kotlin.jvm` to `1.9.23`
 - Dependencies - upgrade `org.jetbrains.kotlinx.kover` to `0.7.6`
-- Dependencies - upgrade `org.jetbrains.qodana` to `2023.3.1`
+- Dependencies - upgrade `org.jetbrains.qodana` to `2023.3.2`
 - Dependencies (GitHub Actions) - upgrade `actions/upload-artifact` to `4`
 - Dependencies (GitHub Actions) - upgrade `codecov/codecov-action` to `4`
 - Dependencies (GitHub Actions) - upgrade `gradle/wrapper-validation-action` to `2`
@@ -290,7 +404,7 @@
 ### Added
 
 - [Kover](https://github.com/Kotlin/kotlinx-kover) integration
-- Enable [Gradle Configuration Cache](https://docs.gradle.org/current/userguide/configuration_cache.html) in `gradle.proeprties`
+- Enable [Gradle Configuration Cache](https://docs.gradle.org/current/userguide/configuration_cache.html) in `gradle.properties`
 - GitHub Actions — mark the pull request created with _Publish Plugin_ workflow with `release changelog` label
 - GitHub Actions — send code coverage reports to [CodeCov](https://codecov.io)
 - Dependencies - upgrade `org.jetbrains.kotlinx.kover` to `0.6.1`
@@ -734,7 +848,13 @@
 - GitHub Actions to automate testing and deployment
 - Kotlin support
 
-[Unreleased]: https://github.com/JetBrains/intellij-platform-plugin-template/compare/v1.14.2...HEAD
+[Unreleased]: https://github.com/JetBrains/intellij-platform-plugin-template/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/JetBrains/intellij-platform-plugin-template/compare/v2.2.0...v2.3.0
+[2.2.0]: https://github.com/JetBrains/intellij-platform-plugin-template/compare/v2.1.0...v2.2.0
+[2.1.0]: https://github.com/JetBrains/intellij-platform-plugin-template/compare/v2.0.2...v2.1.0
+[2.0.2]: https://github.com/JetBrains/intellij-platform-plugin-template/compare/v2.0.1...v2.0.2
+[2.0.1]: https://github.com/JetBrains/intellij-platform-plugin-template/compare/v2.0.0...v2.0.1
+[2.0.0]: https://github.com/JetBrains/intellij-platform-plugin-template/compare/v1.14.2...v2.0.0
 [1.14.2]: https://github.com/JetBrains/intellij-platform-plugin-template/compare/v1.14.1...v1.14.2
 [1.14.1]: https://github.com/JetBrains/intellij-platform-plugin-template/compare/v1.14.0...v1.14.1
 [1.14.0]: https://github.com/JetBrains/intellij-platform-plugin-template/compare/v1.13.0...v1.14.0
@@ -776,5 +896,5 @@
 [0.3.0]: https://github.com/JetBrains/intellij-platform-plugin-template/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/JetBrains/intellij-platform-plugin-template/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/JetBrains/intellij-platform-plugin-template/compare/v0.0.2...v0.1.0
-[0.0.2]: https://github.com/JetBrains/intellij-platform-plugin-template/commits/v0.0.2
-[0.0.1]: https://github.com/JetBrains/intellij-platform-plugin-template/commits
+[0.0.2]: https://github.com/JetBrains/intellij-platform-plugin-template/compare/v0.0.1...v0.0.2
+[0.0.1]: https://github.com/JetBrains/intellij-platform-plugin-template/commits/v0.0.1

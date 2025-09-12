@@ -1,111 +1,64 @@
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
-
-fun properties(key: String) = providers.gradleProperty(key)
-fun environment(key: String) = providers.environmentVariable(key)
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
-    id("java") // Suporte a Java
-    alias(libs.plugins.kotlin) // Suporte a Kotlin
-    alias(libs.plugins.gradleIntelliJPlugin) // Plugin do IntelliJ
-    alias(libs.plugins.changelog) // Plugin de Changelog
-    alias(libs.plugins.qodana) // Plugin Qodana
-    alias(libs.plugins.kover) // Plugin Kover
-    kotlin("plugin.serialization") version "1.8.20" // ✅ Suporte à serialização JSON
-    id("application") // Suporte para gerar a CLI executável
-    id("com.github.johnrengelman.shadow") version "8.1.1" // Fat jar (Uber Jar)
+    id("java") // Java support
+    alias(libs.plugins.kotlin) // Kotlin support
+    alias(libs.plugins.intelliJPlatform) // IntelliJ Platform Gradle Plugin
+    alias(libs.plugins.changelog) // Gradle Changelog Plugin
+    alias(libs.plugins.qodana) // Gradle Qodana Plugin
+    alias(libs.plugins.kover) // Gradle Kover Plugin
 }
 
-group = properties("pluginGroup").get()
-version = properties("pluginVersion").get()
+group = providers.gradleProperty("pluginGroup").get()
+version = providers.gradleProperty("pluginVersion").get()
 
+// Set the JVM language level used to build the project.
+kotlin {
+    jvmToolchain(21)
+}
+
+// Configure project's dependencies
 repositories {
     mavenCentral()
+
+    // IntelliJ Platform Gradle Plugin Repositories Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-repositories-extension.html
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
+// Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
-    implementation(kotlin("stdlib")) // ✅ Inclui a biblioteca padrão do Kotlin
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0") // ✅ Corrotinas
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1") // ✅ Serialização JSON
-}
+    testImplementation(libs.junit)
+    testImplementation(libs.opentest4j)
 
-kotlin {
-    jvmToolchain(17)
-}
+    // IntelliJ Platform Gradle Plugin Dependencies Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
+    intellijPlatform {
+        create(providers.gradleProperty("platformType"), providers.gradleProperty("platformVersion"))
 
-// Configuração do IntelliJ Plugin
-intellij {
-    pluginName = properties("pluginName")
-    version = properties("platformVersion")
-    type = properties("platformType")
-    plugins = properties("platformPlugins").map { it.split(',').map(String::trim).filter(String::isNotEmpty) }
-}
+        // Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.
+        bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
 
-changelog {
-    groups.empty()
-    repositoryUrl = properties("pluginRepositoryUrl")
-}
+        // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file for plugin from JetBrains Marketplace.
+        plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
 
-kover {
-    reports {
-        total {
-            xml { onCheck = true }
-        }
+        // Module Dependencies. Uses `platformBundledModules` property from the gradle.properties file for bundled IntelliJ Platform modules.
+        bundledModules(providers.gradleProperty("platformBundledModules").map { it.split(',') })
+
+        testFramework(TestFrameworkType.Platform)
     }
 }
 
-// Configuração para rodar a CLI
-application {
-    mainClass.set("org.jetbrains.plugins.featurefilegenerator.cli.BatchGenerateFeatureCLI")
-}
+// Configure IntelliJ Platform Gradle Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-extension.html
+intellijPlatform {
+    pluginConfiguration {
+        name = providers.gradleProperty("pluginName")
+        version = providers.gradleProperty("pluginVersion")
 
-// Configuração do JAR normal
-tasks.jar {
-    manifest {
-        attributes["Main-Class"] = "org.jetbrains.plugins.featurefilegenerator.cli.BatchGenerateFeatureCLI"
-    }
-    from(sourceSets.main.get().output)
-}
-
-// Configuração do Shadow Jar (Fat Jar)
-tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
-    archiveBaseName.set("feature-generator")
-    archiveClassifier.set("all")
-    archiveVersion.set("")
-
-    manifest {
-        attributes["Main-Class"] = "org.jetbrains.plugins.featurefilegenerator.cli.BatchGenerateFeatureCLI"
-    }
-
-    from(sourceSets.main.get().output)
-
-    // ✅ Forma correta de incluir todas as dependências no Gradle moderno
-    val runtimeClasspathFiles = project.configurations.getByName("runtimeClasspath").files
-    runtimeClasspathFiles.forEach { file ->
-        from(zipTree(file))
-    }
-
-    dependencies {
-        include(dependency("org.jetbrains.kotlinx:kotlinx-serialization-json"))
-        include(dependency("org.jetbrains.kotlin:kotlin-stdlib"))
-    }
-
-    mergeServiceFiles()
-}
-
-
-// Configuração de tarefas adicionais
-tasks {
-    wrapper {
-        gradleVersion = properties("gradleVersion").get()
-    }
-
-    patchPluginXml {
-        version = properties("pluginVersion")
-        sinceBuild = properties("pluginSinceBuild")
-        untilBuild = properties("pluginUntilBuild")
-
-        pluginDescription = providers.fileContents(layout.projectDirectory.file("README.md")).asText.map {
+        // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
+        description = providers.fileContents(layout.projectDirectory.file("README.md")).asText.map {
             val start = "<!-- Plugin description -->"
             val end = "<!-- Plugin description end -->"
 
@@ -117,8 +70,9 @@ tasks {
             }
         }
 
-        val changelog = project.changelog
-        changeNotes = properties("pluginVersion").map { pluginVersion ->
+        val changelog = project.changelog // local variable for configuration cache compatibility
+        // Get the latest available change notes from the changelog file
+        changeNotes = providers.gradleProperty("pluginVersion").map { pluginVersion ->
             with(changelog) {
                 renderItem(
                     (getOrNull(pluginVersion) ?: getUnreleased())
@@ -128,26 +82,77 @@ tasks {
                 )
             }
         }
+
+        ideaVersion {
+            sinceBuild = providers.gradleProperty("pluginSinceBuild")
+        }
     }
 
-    runIdeForUiTests {
-        systemProperty("robot-server.port", "8082")
-        systemProperty("ide.mac.message.dialogs.as.sheets", "false")
-        systemProperty("jb.privacy.policy.text", "<!--999.999-->")
-        systemProperty("jb.consents.confirmation.enabled", "false")
+    signing {
+        certificateChain = providers.environmentVariable("CERTIFICATE_CHAIN")
+        privateKey = providers.environmentVariable("PRIVATE_KEY")
+        password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
     }
 
-    signPlugin {
-        certificateChain = environment("CERTIFICATE_CHAIN")
-        privateKey = environment("PRIVATE_KEY")
-        password = environment("PRIVATE_KEY_PASSWORD")
+    publishing {
+        token = providers.environmentVariable("PUBLISH_TOKEN")
+        // The pluginVersion is based on the SemVer (https://semver.org) and supports pre-release labels, like 2.1.7-alpha.3
+        // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
+        // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
+        channels = providers.gradleProperty("pluginVersion").map { listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" }) }
+    }
+
+    pluginVerification {
+        ides {
+            recommended()
+        }
+    }
+}
+
+// Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
+changelog {
+    groups.empty()
+    repositoryUrl = providers.gradleProperty("pluginRepositoryUrl")
+}
+
+// Configure Gradle Kover Plugin - read more: https://github.com/Kotlin/kotlinx-kover#configuration
+kover {
+    reports {
+        total {
+            xml {
+                onCheck = true
+            }
+        }
+    }
+}
+
+tasks {
+    wrapper {
+        gradleVersion = providers.gradleProperty("gradleVersion").get()
     }
 
     publishPlugin {
-        dependsOn("patchChangelog")
-        token = environment("PUBLISH_TOKEN")
-        channels = properties("pluginVersion").map {
-            listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" })
+        dependsOn(patchChangelog)
+    }
+}
+
+intellijPlatformTesting {
+    runIde {
+        register("runIdeForUiTests") {
+            task {
+                jvmArgumentProviders += CommandLineArgumentProvider {
+                    listOf(
+                        "-Drobot-server.port=8082",
+                        "-Dide.mac.message.dialogs.as.sheets=false",
+                        "-Djb.privacy.policy.text=<!--999.999-->",
+                        "-Djb.consents.confirmation.enabled=false",
+                    )
+                }
+            }
+
+            plugins {
+                robotServerPlugin()
+            }
         }
     }
 }
