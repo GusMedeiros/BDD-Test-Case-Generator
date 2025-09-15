@@ -1,25 +1,25 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <id>org.jetbrains.plugins.bddtestgen</id>
-    <name>BDDTestGen</name>
+    <id>org.jetbrains.plugins.featurefilegenerator</id>
+    <name>featurefilegenerator</name>
     <vendor>JetBrains</vendor>
 
     <!-- Ações preservadas -->
     <actions>
-        <action id="org.jetbrains.plugins.featurefilegenerator.actions.GenerateFeatureFileAction"
+        <action id="org.jetbrains.plugins.bddtestgen.actions.GenerateFeatureFileAction"
                 class="org.jetbrains.plugins.featurefilegenerator.actions.GenerateFeatureFileAction"
                 text="[BDDTestGen] Generate Feature File"
                 description="Generates a .feature file from a text file">
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
         </action>
-        <action id="org.jetbrains.plugins.featurefilegenerator.actions.ChangeConfigsAction"
+        <action id="org.jetbrains.plugins.bddtestgen.actions.ChangeConfigsAction"
                 class="org.jetbrains.plugins.featurefilegenerator.actions.ChangeConfigsAction"
                 text="[BDDTestGen] Change settings"
                 description="Asks the user the desired configs for BDDGPT">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
-        <action id="org.jetbrains.plugins.featurefilegenerator.actions.BatchGenerateFeatureFileAction"
+        <action id="org.jetbrains.plugins.bddtestgen.actions.BatchGenerateFeatureFileAction"
                 class = "org.jetbrains.plugins.featurefilegenerator.actions.BatchGenerateFeatureFileAction"
                 text= "[BDDTestGen] Batch Generate Feature File"
                 description="Generates a .feature file for each configured LLM">
@@ -35,7 +35,7 @@
 
     <!-- Extensões do plugin -->
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="org.jetbrains.plugins.bddtestgen.LLMSettings" />
+        <applicationService serviceImplementation="org.jetbrains.plugins.featurefilegenerator.LLMSettings" />
     </extensions>
 
 </idea-plugin>

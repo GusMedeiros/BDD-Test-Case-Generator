@@ -129,14 +129,6 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         fun getInstance(): LLMSettings {
             return ApplicationManager.getApplication().getService(LLMSettings::class.java)
         }
-
-        init {
-            val settings = getInstance()
-            if (settings.getConfigurations().isEmpty()) {
-                println("DEBUG: No configurations found on init. Adding defaults...")
-                settings.addDefaultConfigurationsIfMissing()
-            }
-        }
     }
 
     override fun getState(): State = myState
@@ -144,6 +136,11 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
     override fun loadState(state: State) {
         myState = state
         println("DEBUG: Loading LLMSettings state")
+
+        if (myState.configurations.isEmpty()) {
+            println("DEBUG: No configurations found on init. Adding defaults...")
+            addDefaultConfigurationsIfMissing()
+        }
 
         myState.configurations.forEach { config ->
             println("DEBUG: Loaded configuration -> ${config.name}")
@@ -179,8 +176,6 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
 
             println("DEBUG: Fixed parameters -> ${config.namedParameters}")
         }
-
-        addDefaultConfigurationsIfMissing()
     }
 
 
@@ -291,14 +286,7 @@ class LLMSettings : PersistentStateComponent<LLMSettings.State> {
         val fixedParameters = mutableListOf<NamedParameter>()
 
         parameters.forEach { param ->
-            when (param) {
-                is NamedParameter -> {
-                    fixedParameters.add(param)
-                }
-                else -> {
-                    println("DEBUG: ⚠ Unexpected type found in namedParameters: ${param?.javaClass?.name}")
-                }
-            }
+            fixedParameters.add(param)
         }
 
         return fixedParameters
