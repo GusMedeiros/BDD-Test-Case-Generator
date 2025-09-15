@@ -1,8 +1,8 @@
 # BDD TestGen Plugin
 
-## Overview
-
+<!-- Plugin description -->
 BDD TestGen is an IntelliJ IDEA plugin designed to facilitate the process of generating BDD (Behavior-Driven Development) artifacts from user stories. By integrating with powerful Large Language Models (LLMs), this plugin helps you create comprehensive test scenarios directly within your IDE.
+<!-- Plugin description end -->
 
 This document provides instructions for manual installation, configuration, and usage of the BDD TestGen plugin.
 
