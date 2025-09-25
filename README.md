@@ -54,7 +54,7 @@ Before using the plugin, you need to configure your desired LLM profile:
 
 1.  **Access Settings:**
     In the IntelliJ IDEA menu, go to `Tools` -> `Change BDDTestGen Settings`.
-
+    *  To show the menu, click the four stripes icon on the top left corner of the IDE window. 
 2.  **Enter Your Settings and Credentials:**
     A dialog box will appear. Select the LLM you wish to use from the available profiles. The required fields will vary depending on the selected LLM. Fill in the necessary information (e.g., API keys, model names).
     Pay special attention to the Console Command field. For windows it's usually "python", for linux it's usually python3.
@@ -65,11 +65,12 @@ Before using the plugin, you need to configure your desired LLM profile:
 
 To generate BDD test cases from a user story:
 
-1.  **Locate User Story:**
+1. **Create or open a project**
+	If already inside a project, This can be done from the Idea menu from "New" -> "Project" or "Open" -> <your_project_folder>.
+	If in the Idea home screen, click "New Project" or "Open" for an existing one.
+2. **Locate User Story:**
     In the Project view, find the file containing the user story you want to generate test cases for.
-
-2.  **Run BDDTestGen:**
-    Right-click on the user story file.
-
-3.  **Generate Test cases:**
-    From the context menu, select "Run BDDTestGen". The plugin will then process the user story using your configured LLM and generate the corresponding BDD tests.
+3.  **Run BDDTestGen:**
+	Right click your user story or existing feature file to be enhanced.
+4.  **Generate Test cases:**
+	From the context menu that popped up when right clicking, select "Run BDDTestGen". The plugin will then process the file using your configured LLM and generate the corresponding BDD tests.
