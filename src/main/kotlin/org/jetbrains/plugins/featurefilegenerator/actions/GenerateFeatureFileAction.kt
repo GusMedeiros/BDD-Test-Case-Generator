@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.plugins.featurefilegenerator.LLMSettings
 import org.jetbrains.plugins.featurefilegenerator.executor.LLMExecutor
-import java.io.File
 
 class GenerateFeatureFileAction : AnAction() {
 
@@ -41,7 +40,7 @@ class GenerateFeatureFileAction : AnAction() {
                         Messages.showMessageDialog(
                             project,
                             result,
-                            "Execution Result - $llmName",
+                            "$llmName finished.",
                             Messages.getInformationIcon()
                         )
                     }

@@ -69,7 +69,7 @@ def main():
         with open(output_file, "w", encoding="utf-8") as file:
             file.write(response)
 
-        print(f"✅ Response saved at: {output_file}")
+        print(f"Response saved at: {output_file}")
 
     except Exception as e:
         print(f"❌ Error: {e}")

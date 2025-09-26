@@ -26,7 +26,7 @@ class BatchGenerateFeatureFileAction : AnAction() {
                 Messages.showMessageDialog(
                     project,
                     result,
-                    "Execution Result ($llmName)",
+                    "$llmName finished.",
                     Messages.getInformationIcon()
                 )
             }

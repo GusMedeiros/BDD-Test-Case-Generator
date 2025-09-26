@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    print(f"Prompt Path: {args.prompt_instruction_path}\n")
+    # print(f"Prompt Path: {args.prompt_instruction_path}\n")
 
     try:
         result = Main.run(
@@ -128,13 +128,13 @@ if __name__ == "__main__":
             debug=args.debug
         )
 
-        print(result)  # Print the result to stdout
+        # print(result)  # Print the result to stdout
         output_path = os.path.join(args.output_dir_path, 'gpt_output.feature')
 
         with open(output_path, 'w', encoding="utf-8") as file:
             file.write(result)
-
+        print(f"Response saved at: {output_path}")
         sys.exit(0)  # Success
     except Exception as e:
-        print(f"Error: {str(e)}", file=sys.stderr)
+        # print(f"Error: {str(e)}", file=sys.stderr)
         sys.exit(1)  # Failure
