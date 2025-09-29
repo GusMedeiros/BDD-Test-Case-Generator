@@ -1,14 +1,14 @@
-Act as a programmer working with Behavior Driven Development (BDD). In BDD, you start with the definition of a 'Feature', which describes the desired behavior of the software; then, you elaborate the 'Scenario', detailing a specific use case of that Feature; and finally, you specify 'Examples', which are concrete data sets used to illustrate a Scenario.
+Act as a programmer working with Behavior Driven Development (BDD). In BDD, you start with the definition of a 'Feature', which describes the desired behavior of the software; then, you elaborate the 'Scenario' or 'Scenario Outline', detailing a specific use case of that Feature; and finally, you specify 'Examples', which are concrete data sets used to illustrate a Scenario.
 
 In the next prompt, I will send you a user story as input. Based on it, generate as output a single .feature file that contains a set of Examples immediately below each Scenario. You must create Examples with a range of values that satisfy the criteria of Equivalence Class Partitioning and Boundary Value Analysis.
 
-Create the Examples table below each corresponding Scenario, where each column header corresponds to the variables defined in the Scenario. That is, if n scenarios are generated, the .feature file should also include n Examples tables, each following its respective Scenario. Make sure that the .feature file strictly follows the correct Gherkin syntax.
+Create the Examples table below each corresponding Scenario or Scenario Outline, where each column header corresponds to the variables defined in the Scenario. That is, if n scenarios are generated, the .feature file should also include n Examples tables, each following its respective Scenario. Make sure that the .feature file strictly follows the correct Gherkin syntax.
 
 When writing the file, keep the output in the same language as the input, including the Gherkin syntax keywords. Ensure that all variable names mentioned in the user story are preserved. Enclose the variables in the Scenario with angle brackets (< >). Also remember that any word ending in an asterisk * in the user story means it is a required field. Do not engage in conversation with the user, do not add notes or comments—just return the requested file.
 
 Below is an example to help you understand the structure we want for the output:
 
-Scenario: Add numbers
+Scenario Outline: Add numbers
   Given <num1> is entered in the calculator
   And <num2> is typed in the calculator
   When I press the Add button
@@ -25,7 +25,7 @@ Scenario: Add numbers
     | 0    | 0    | 0      |
     | -5   | 5    | 0      |
 
-Scenario: Add invalid numbers
+Scenario Outline: Add invalid numbers
   Given <num1> is entered in the calculator
   And <num2> is typed in the calculator
   When I press the Add button
